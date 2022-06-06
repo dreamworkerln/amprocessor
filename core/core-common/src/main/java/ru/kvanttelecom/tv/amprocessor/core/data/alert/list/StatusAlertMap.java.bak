@@ -1,0 +1,146 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.AlertStatus;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+
+import java.util.*;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.formatMsg;
+
+/**
+ * Map of AlertNameMap grouped by AlertStatus
+ */
+@Component
+@Scope("prototype")
+public class StatusAlertMap {
+
+    private final Map<AlertStatus, NameAlertMap> alerts = new TreeMap<>();
+
+    @Autowired
+    private ApplicationContext context;
+
+//    @Autowired
+//    private StatusAlertMapMarkupFactory statusMapFactory;
+
+    /**
+     * Add messages to storage
+     */
+    public void add(List<Alert> list) {
+        synchronized (this) {
+            for (Alert alert : list) {
+                NameAlertMap nameAlertMap = alerts.computeIfAbsent(alert.getStatus(), l -> context.getBean(NameAlertMap.class));
+                nameAlertMap.add(alert);
+            }
+        }
+    }
+
+    /**
+     * Clear storage and add messages to it
+     */
+    public void replace(List<Alert> list) {
+        synchronized (this) {
+            alerts.clear();
+            for (Alert alert : list) {
+                NameAlertMap nameAlertMap = alerts.computeIfAbsent(alert.getStatus(), l -> context.getBean(NameAlertMap.class));
+                nameAlertMap.add(alert);
+            }
+        }
+    }
+
+
+    /**
+     * Get all messages and clear storage
+     */
+    public String takeAll(MarkupTypeEnum type) {
+        String result;
+        synchronized (this) {
+            result = toString(type);
+            alerts.clear();
+        }
+        return result;
+    }
+
+
+    /**
+     * Get all messages
+     */
+    public String getAll(MarkupTypeEnum type) {
+        String result;
+        synchronized (this) {
+            result = toString(type);
+        }
+        return result;
+    }
+
+
+    public boolean haveMessages() {
+        boolean result;
+        synchronized (this) {
+            result = alerts.size() > 0;
+        }
+        return result;
+    }
+
+    /**
+     * Get all messages and clear storage
+     */
+    public void clear() {
+        synchronized (this) {
+            alerts.clear();
+        }
+    }
+
+    // =========================================================
+
+
+    // Call only in synchronized section
+    private String toString(MarkupTypeEnum type) {
+
+        String STATUS_DELIMITER = "\n";
+        String BOLDER = "";
+
+        // Antipattern
+        switch (type) {
+
+            case MAIL:
+                STATUS_DELIMITER = "======================================================\n";
+                BOLDER = "";
+                break;
+
+
+            case TELEGRAM:
+
+                STATUS_DELIMITER = "=========================================\n";
+                BOLDER = "*";
+                break;
+        }
+
+
+
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<AlertStatus, NameAlertMap> e : alerts.entrySet()) {
+
+            AlertStatus status = e.getKey();
+            NameAlertMap nameMap = e.getValue();
+
+            if(nameMap.size() > 0) {
+
+                sb.append(STATUS_DELIMITER);
+                String statusStr = status == AlertStatus.FIRING ?
+                    "🔥 " + BOLDER + status.toString().toUpperCase() + BOLDER + " 🔥" : status.toString();
+                sb.append("Alerts " + statusStr + "\n");
+                sb.append(STATUS_DELIMITER);
+                sb.append("\n");
+                sb.append(nameMap.toString(type));
+            }
+        }
+        return sb.toString();
+    }
+
+}
+

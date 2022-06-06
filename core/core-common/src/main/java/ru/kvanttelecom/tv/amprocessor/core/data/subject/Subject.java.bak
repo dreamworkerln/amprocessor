@@ -1,0 +1,32 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.subject;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+/**
+ * Alert subject
+ */
+@Data
+@Builder
+@AllArgsConstructor
+public class Subject {
+    private String key;            // subject identity in our system
+    private String name;           // subject name (identity used in subject third-party system(flussonic, etc))
+    private String title;          // subject title (user-friendly name, from third-party system)
+    //private String description;  // subject detailed description (from third-party system)
+    private String referenceUrl;   // link to get more info in third-party system
+
+//    public Subject(String key, String title, String description) {
+//        this.key = key;
+//        this.title = title;
+//        this.description = description;
+//    }
+
+//    public Subject(String key, String title, String description, String referenceUrl) {
+//        this.key = key;
+//        this.title = title;
+//        this.description = description;
+//        //this.referenceUrl = referenceUrl;
+//    }
+}

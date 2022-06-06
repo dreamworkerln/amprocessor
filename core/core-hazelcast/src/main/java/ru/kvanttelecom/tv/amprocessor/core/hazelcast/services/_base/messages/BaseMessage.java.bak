@@ -1,0 +1,24 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages;
+
+import com.hazelcast.topic.Message;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.UUID;
+
+@Data
+public abstract class BaseMessage<M> implements Serializable {
+    public final Integer id;
+    //public final Message<M> hazelMessage = null; // initialized via reflection
+
+    public BaseMessage(Integer id) {
+        this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "BaseMessage{" +
+            "id=" + id +
+            '}';
+    }
+}

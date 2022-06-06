@@ -1,0 +1,167 @@
+version: '3.2'
+services:
+
+  database:
+    image: "dreamworkerln/amprocessor-database:${TAG}"
+    environment:
+      POSTGRES_PASSWORD: gjhUY876787ytuh87gdfzk5
+    restart: always
+    volumes:
+      - type: volume
+        source: postgres-data
+        target: /var/lib/postgresql/data
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: 'rabbitmq'
+    volumes:
+      - "rabbit-data:/var/lib/rabbitmq/"
+    restart: always
+
+  configserver:
+    image: "dreamworkerln/amprocessor-configserver:${TAG}"
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+#      SPRING_PROFILES_ACTIVE: "native, default"
+    restart: always
+    volumes:
+      - ./configserver/application.properties:/application.properties:ro
+      - ./configserver/amprocessor-config:/amprocessor-config:ro
+    labels:
+      log: eslog
+
+  sgrabber:
+    image: "dreamworkerln/amprocessor-sgrabber:${TAG}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - configserver
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./sgrabber/bootstrap.properties
+        target: /bootstrap.properties
+    labels:
+      log: eslog
+
+  flexporter:
+    image: "dreamworkerln/amprocessor-flexporter:${TAG}"
+    depends_on:
+      - configserver
+      - sgrabber
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./flexporter/bootstrap.properties
+        target: /bootstrap.properties
+    ports:
+      - "9052:9052"
+    labels:
+      log: eslog
+
+  alerthandler:
+    image: "dreamworkerln/amprocessor-alerthandler:${TAG}"
+    depends_on:
+      - configserver
+      - rabbitmq
+      - sgrabber
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./alerthandler/bootstrap.properties
+        target: /bootstrap.properties
+    ports:
+      - "8016:8016"
+    labels:
+      log: eslog
+
+  telebot:
+    image: "dreamworkerln/amprocessor-telebot:${TAG}"
+    depends_on:
+      - configserver
+      - rabbitmq
+      - sgrabber
+      - alerthandler
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./telebot/bootstrap.properties
+        target: /bootstrap.properties
+    labels:
+      log: eslog
+
+  cameradetails:
+    image: "dreamworkerln/amprocessor-cameradetails:${TAG}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - configserver
+      - rabbitmq
+      - sgrabber
+      - alerthandler
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./cameradetails/bootstrap.properties
+        target: /bootstrap.properties
+    ports:
+      - "8040:8040"
+    labels:
+      log: eslog
+
+  mailer:
+    image: "dreamworkerln/amprocessor-mailer:${TAG}"
+    depends_on:
+      - configserver
+      - rabbitmq
+      - sgrabber
+      - alerthandler
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS_HEAP}
+      TZ: "Europe/Moscow"
+    restart: always
+    volumes:
+      - type: bind
+        read_only: true
+        source: ./mailer/bootstrap.properties
+        target: /bootstrap.properties
+    labels:
+      log: eslog
+
+  filebeat:
+    image: "docker.elastic.co/beats/filebeat:7.9.3"
+    restart: always
+    depends_on:
+      - elasticsearch
+    command: "-environment container -strict.perms=false"
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  postgres-data:
+    external: false
+  rabbit-data:

@@ -1,0 +1,21 @@
+package ru.kvanttelecom.tv.amprocessor.cameradetails.configurations;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraService;
+
+import javax.annotation.PostConstruct;
+
+
+public class HazelcastAssholeListenerConfigurer {
+
+    @Autowired
+    DetailsEntryListener detailsEntryListener;
+
+    @Autowired
+    CameraService cameraService;
+
+    @PostConstruct
+    private void init() {
+        cameraService.addEntryListener(detailsEntryListener, p -> true,true);
+    }
+}

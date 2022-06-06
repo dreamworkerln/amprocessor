@@ -1,0 +1,12 @@
+package ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails;
+
+public enum CameraGroup {
+    JURIDIC,
+    NATURAL,
+    INTERNAL,
+    TEST,
+    DISABLED,
+    WAREHOUSE,
+    VLAN,
+    NAT
+}

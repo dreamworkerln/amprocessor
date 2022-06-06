@@ -1,0 +1,17 @@
+package ru.kvanttelecom.tv.alertmanager.configserver;
+
+import org.springframework.cloud.endpoint.event.RefreshEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.stereotype.Component;
+
+
+@Component
+class ApplicationEventListener implements ApplicationListener<RefreshEvent> {
+
+
+    @Override
+    public void onApplicationEvent(RefreshEvent event) {
+        System.out.println(" ****************************   event listener: " + event.toString());
+    }
+}
+

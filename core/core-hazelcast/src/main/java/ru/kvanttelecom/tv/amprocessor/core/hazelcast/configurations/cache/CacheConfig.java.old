@@ -1,0 +1,289 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.configurations.cache;
+
+import com.hazelcast.config.*;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.modules.configurations.MapModulesStore;
+
+@Configuration
+@Slf4j
+public class CacheConfig {
+
+    // maps
+    public static final String MAP_CAMERAS = "MAP_CAMERAS";
+    //public static final String MAP_CAMERAS_DETAILS = "MAP_CAMERAS_DETAILS";
+    public static final String MAP_ALERTS = "MAP_ALERTS";
+    public static final String MAP_MODULES = "MAP_MODULES";
+
+    // sets
+    //public static final String SET_CAMERAS_FLUSH = "SET_CAMERAS_FLUSH"; // which cameras.details need to flush to db
+
+    // topics
+    public static final String TOPIC_CAMERAS_FLUSH_REQUEST = "TOPIC_CAMERAS_FLUSH_REQUEST";
+    public static final String TOPIC_CAMERAS_FLUSH_RESPONSE = "TOPIC_CAMERAS_FLUSH_RESPONSE";
+
+    public static final String TOPIC_MODULE_STATE_CHANGED_REQUEST = "TOPIC_MODULE_STATE_CHANGED_REQUEST";
+    public static final String TOPIC_MODULE_STATE_CHANGED_RESPONSE = "TOPIC_MODULE_STATE_CHANGED_RESPONSE";
+
+    // properties
+    //public static final String CACHE_CAMERAS_TOPIC_LISTENER = "CACHE_CAMERAS_TOPIC_LISTENER";
+
+    //public static final String CACHE_MAP_CAMERAS_LOADER = "CACHE_MAP_CAMERAS_LOADER";
+    //public static final String CACHE_MAP_OPTIONS_LOADER = "CACHE_MAP_OPTIONS_LOADER";
+
+
+
+
+
+//    @Autowired
+//    private CameraSerializer cameraSerializer;
+//    @Autowired
+//    private FlushMessageSerializer flushMessageSerializer;
+//    @Autowired
+//    private AlertSerializer alertSerializer;
+//    @Autowired
+//    private ModuleStateSerializer moduleStateSerializer;
+//    @Autowired
+//    private MessageModuleStateSerializer messageModuleStateSerializer;
+
+
+
+
+
+    @Bean
+    @Primary
+    public HazelcastInstance hazelcastInstance() {
+        return Hazelcast.newHazelcastInstance(createConfig());
+    }
+
+    // =======================================================
+
+
+    private Config createConfig() {
+        Config config = new Config();
+
+        //maps
+        config.addMapConfig(mapCameraConfig());
+        config.addMapConfig(mapAlertConfig());
+        config.addMapConfig(mapModulesConfig());
+
+
+
+        //sets
+
+        //serializers
+//        config.getSerializationConfig()
+//            .addSerializerConfig(serializerCamerasConfig())
+//            .addSerializerConfig(serializerMessageSetStringConfig())
+//            .addSerializerConfig(serializerAlertConfig())
+//            .addSerializerConfig(serializerModuleStateConfig())
+//            .addSerializerConfig(serializerMessageModuleStateConfig());
+
+
+
+        //topics
+        //config.addTopicConfig(topicFlushRequestConfig());
+        //config.addTopicConfig(topicFlushResponseConfig());
+
+        //config.addTopicConfig(topicModulesRequestConfig());
+        //config.addTopicConfig(topicModulesResponseConfig());
+
+        config.addReliableTopicConfig(topicFlushRequestConfig());
+        config.addReliableTopicConfig(topicFlushResponseConfig());
+        config.addReliableTopicConfig(topicModulesRequestConfig());
+        config.addReliableTopicConfig(topicModulesResponseConfig());
+        
+        return config;
+    }
+
+    // -----------------------------------------------
+
+    private MapConfig mapCameraConfig() {
+        MapConfig result = new MapConfig(MAP_CAMERAS);
+        //mapConfig.setTimeToLiveSeconds(360);
+        //mapConfig.setMaxIdleSeconds(20);
+
+//        MapStoreConfig mapStoreConfig = new MapStoreConfig();
+//        mapStoreConfig.setImplementation(new MapCameraStore());
+//        mapStoreConfig.setWriteDelaySeconds(0);
+//        result.setMapStoreConfig(mapStoreConfig);
+
+        return result;
+    }
+
+//    private SetConfig setCameraFlushConfig() {
+//        SetConfig result = new SetConfig(SET_CAMERAS_FLUSH);
+//        //mapConfig.setTimeToLiveSeconds(360);
+//        //mapConfig.setMaxIdleSeconds(20);
+//        return result;
+//    }
+
+//    private MapConfig mapCameraDetailsConfig() {
+//        MapConfig result = new MapConfig(MAP_CAMERAS_DETAILS);
+//        //mapConfig.setTimeToLiveSeconds(360);
+//        //mapConfig.setMaxIdleSeconds(20);
+//        return result;
+//    }
+
+    private MapConfig mapAlertConfig() {
+        MapConfig result = new MapConfig(MAP_ALERTS);
+        //mapConfig.setTimeToLiveSeconds(360);
+        //mapConfig.setMaxIdleSeconds(20);
+        return result;
+    }
+
+    private MapConfig mapModulesConfig() {
+        MapConfig result = new MapConfig(MAP_MODULES);
+        //mapConfig.setTimeToLiveSeconds(360);
+        //mapConfig.setMaxIdleSeconds(20);
+
+        MapStoreConfig mapStoreConfig = new MapStoreConfig();
+        mapStoreConfig.setImplementation(new MapModulesStore());
+        mapStoreConfig.setWriteDelaySeconds(0);
+        result.setMapStoreConfig(mapStoreConfig);
+
+        return result;
+    }
+
+    // ----------------------------------------------------
+
+    /*
+    private SerializerConfig serializerCamerasConfig() {
+        return new SerializerConfig()
+            .setImplementation(cameraSerializer)
+            .setTypeClass(Camera.class);
+    }
+
+    private SerializerConfig serializerMessageSetStringConfig() {
+        return new SerializerConfig()
+            .setImplementation(flushMessageSerializer)
+            .setTypeClass(Message.class);
+    }
+
+
+    private SerializerConfig serializerAlertConfig() {
+        return new SerializerConfig()
+            .setImplementation(alertSerializer)
+            .setTypeClass(Alert.class);
+    }
+
+    private SerializerConfig serializerModuleStateConfig() {
+        return new SerializerConfig()
+            .setImplementation(moduleStateSerializer)
+            .setTypeClass(ModuleState.class);
+    }
+
+    private SerializerConfig serializerMessageModuleStateConfig() {
+        return new SerializerConfig()
+            .setImplementation(messageModuleStateSerializer)
+            .setTypeClass(Message.class);
+    }
+    */
+
+
+
+
+
+
+    // -----------------------------------------------------------
+
+    /*
+    private TopicConfig topicFlushRequestConfig() {
+        TopicConfig result = new TopicConfig()
+            .setGlobalOrderingEnabled(true)
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_CAMERAS_FLUSH_REQUEST);
+        return result;
+    }
+
+    private TopicConfig topicFlushResponseConfig() {
+        TopicConfig result = new TopicConfig()
+            .setGlobalOrderingEnabled(true)
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_CAMERAS_FLUSH_RESPONSE);
+        return result;
+    }
+
+
+    private TopicConfig topicModulesRequestConfig() {
+        TopicConfig result = new TopicConfig()
+            .setGlobalOrderingEnabled(true)
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_MODULE_STATE_CHANGED_REQUEST);
+        return result;
+    }
+    private TopicConfig topicModulesResponseConfig() {
+        TopicConfig result = new TopicConfig()
+            .setGlobalOrderingEnabled(true)
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_MODULE_STATE_CHANGED_RESPONSE);
+        return result;
+    }
+    */
+
+    private ReliableTopicConfig topicFlushRequestConfig() {
+        ReliableTopicConfig result = new ReliableTopicConfig()
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_CAMERAS_FLUSH_REQUEST);
+        return result;
+    }
+
+    private ReliableTopicConfig topicFlushResponseConfig() {
+        ReliableTopicConfig result = new ReliableTopicConfig()
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_CAMERAS_FLUSH_RESPONSE);
+        return result;
+    }
+
+
+    private ReliableTopicConfig topicModulesRequestConfig() {
+        ReliableTopicConfig result = new ReliableTopicConfig()
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_MODULE_STATE_CHANGED_REQUEST);
+        return result;
+    }
+    private ReliableTopicConfig topicModulesResponseConfig() {
+        ReliableTopicConfig result = new ReliableTopicConfig()
+            .setStatisticsEnabled(true)
+            .setName(TOPIC_MODULE_STATE_CHANGED_RESPONSE);
+        return result;
+    }
+
+
+}
+
+
+
+//    @Component
+//    public static class TopicCameraFlushListener {
+//
+//        private Consumer<Set<String>> topicFlushHandler = set -> {
+//            log.debug("TOPIC {}: {}", TOPIC_CAMERAS_FLUSH, set);
+//        };
+//
+//        public void assignHandler(Consumer<Set<String>> listener) {
+//            topicFlushHandler = listener;
+//        }
+//    }
+
+
+
+//        Properties props = System.getProperties();
+//        String className = props.getProperty(CACHE_CAMERAS_MAP_LISTENER);
+//        if(className != null) {
+//            result.addEntryListenerConfig(
+//                new EntryListenerConfig(className, true, true));
+//        }
+
+
+
+
+//        MessageListener<Set<String>> implementation = message -> {
+//            Set<String> list = message.getMessageObject();
+//            topicCameraFlushListener.topicFlushHandler.accept(list);
+//        };
+//        result.addMessageListenerConfig(new ListenerConfig(implementation));

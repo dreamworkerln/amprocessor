@@ -1,0 +1,74 @@
+package ru.kvanttelecom.tv.cameradetails.services.;
+
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import ru.kvanttelecom.tv.alertmanager.core.db.entities.CameraDetailsEntity;
+import ru.kvanttelecom.tv.alertmanager.core.db.services.CameraDetailsDBService;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@Slf4j
+class CameraDetailsServiceTest {
+
+    @Autowired
+    private CameraDetailsService detailsService; 
+
+
+    @BeforeAll
+    static void beforeAll(@Autowired CameraDetailsService propertiesService) {
+
+        CameraDetailsEntity cp = new CameraDetailsEntity(
+            "Вася",
+            "Воронежб 57б 64, 3 угол, 2 этаж",
+            "ОДИНН АССССС",
+            "ST ST ST ST 003");
+        propertiesService.save(cp);
+    }
+
+
+    @BeforeEach
+    void setUp() {
+    }
+
+    @AfterEach
+    void tearDown() {
+    }
+
+
+
+    @Test
+    void findByName() {
+
+        Optional<CameraDetailsEntity> cpo = detailsService.findByName("вася");
+        assertThat(cpo).isEmpty();
+
+        cpo = detailsService.findByName("Вася");
+
+        assertThat(cpo).isPresent();
+
+        assertThat(cpo).get()
+            .extracting(CameraDetailsEntity::getName, CameraDetailsEntity::getOdinAssId)
+            .containsExactly("Вася", "ОДИНН АССССС");
+
+
+
+
+
+//        assertThat(cpo)
+//            .map(CameraPropertiesEntity::getName).hasValue("Вася");
+
+
+
+    }
+}

@@ -1,0 +1,61 @@
+#filebeat.inputs:
+#  - type: container
+#    paths:
+#      - '/var/lib/docker/containers/*/*.log'
+
+
+
+
+
+
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      templates:
+        - condition:
+            contains:
+              docker.container.image: amprocessor
+          config:
+            - type: container
+              paths:
+                - /var/lib/docker/containers/${data.docker.container.id}/*.log
+              exclude_lines: ["^\\s+[\\-`('.|_]"]  # drop asciiart lines
+
+
+
+
+
+#filebeat.autodiscover:
+#  providers:
+#    - type: docker
+#      hints.enabled: true
+#      templates:
+#        - condition:
+#            contains:
+#              docker.container.image: redis
+##              docker.container.labels.filebeat_enable: "true"
+#          config:
+#            - type: container
+#              containers.ids:
+#                - "${data.docker.container.id}"
+
+processors:
+#  - add_docker_metadata:
+#      host: "unix:///var/run/docker.sock"
+  - decode_json_fields:
+      fields: ["message"]
+      target: "json"
+      overwrite_keys: true
+
+
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+#  username: "elastic"
+#  password: "x22ODM9UhHWrYa92BxQe"
+  indices:
+    - index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+
+logging.json: true
+logging.metrics.enabled: false
+

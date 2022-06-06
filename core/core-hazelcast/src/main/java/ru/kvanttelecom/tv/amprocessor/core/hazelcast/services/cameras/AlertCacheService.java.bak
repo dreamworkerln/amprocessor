@@ -1,0 +1,24 @@
+package ru.kvanttelecom.tv.alertmanager.core.hazelcast.services.camera;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.hazelcast.services.cache.AlertCache;
+
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class AlertCacheService {
+
+    @Autowired
+    AlertCache alertCache;
+
+    public List<Alert> get(String name) {
+        return alertCache.get();
+    }
+
+    public void set(List<Alert> alertList) {
+        alertCache.set(alertList);
+    }
+}

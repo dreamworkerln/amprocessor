@@ -1,0 +1,257 @@
+package ru.kvanttelecom.tv.amprocessor.core.db.services;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.kvanttelecom.tv.amprocessor.core.db.converters.cameradetails.CameraDetailsConverter;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraGroup;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraService;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraDetailsCacheService;
+import ru.kvanttelecom.tv.amprocessor.core.services.camera.CameraDetailsService;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+
+/**
+ * CameraDetails (DTO) service
+ * <br>
+ * Used CameraDetailsCacheService as layer 1 cache,
+ * used CameraDetailsEntityService as cacheloader.
+ * <br>
+ * On startup load all entities from DB to layer 1
+ *
+ */
+@Service
+@Primary
+@Transactional
+@Slf4j
+public class CameraDetailsDtoService implements CameraDetailsService {
+
+    @Autowired
+    private CameraCacheService cameraCache;
+    @Autowired
+    private CameraDetailsConverter converter;
+    @Autowired
+    private CameraDetailsEntityService detailsEntityService;
+
+    //private boolean updateCameraDetailsOnStartup = true; // update existing cameraDetails only on startup
+
+    //private volatile boolean detailsCacheHasBeenInitialized = false;
+
+    // ------------------------------------------------------
+
+    @Override
+    public CameraDetails get(String name) {
+        return detailsCache.get(name);
+    }
+
+    @Override
+    public CameraDetails save(CameraDetails details) {
+        CameraDetails result = converter.toDto(detailsEntityService.save(converter.toEntity(details)));
+
+
+    return result;
+    }
+
+    public List<CameraDetails> saveList(Iterable<CameraDetails> list) {
+        List<CameraDetails> result = converter.toDtoList(detailsEntityService.saveAll(converter.toEntityList(list)));
+        detailsCache.saveList(result);// сохранять result, т.к. в нем id != null (БД создаст id)
+        return result;
+    }
+
+    @Override
+    public void delete(CameraDetails details) {
+        detailsEntityService.deleteById(details.getId());
+        detailsCache.delete(details);
+    }
+
+    @Override
+    public void deleteList(Iterable<CameraDetails> list) {
+        List<Long> ids =  StreamSupport.stream(list.spliterator(),false)
+            .map(CameraDetails::getId).collect(Collectors.toList());
+        detailsEntityService.deleteAllById(ids);
+        detailsCache.deleteList(list);
+    }
+
+    @Override
+    public List<CameraDetails> getList() {
+         return detailsCache.getList();
+    }
+
+    @Override
+    public Map<String, CameraDetails> getMap() {
+        return detailsCache.getMap();
+    }
+
+    @Override
+    public long count() {
+        return detailsCache.count();
+    }
+
+    @Override
+    public boolean contains(String name) {
+        return detailsCache.contains(name);
+    }
+
+    /**
+     * Custom synchronization logic
+     */
+    @Override
+    public void merge(Map<String, CameraDetails> from) {
+        synchronize();
+    }
+
+    /**
+     * Sync both detailsCache and DB
+     */
+    public void synchronize() {
+//        // exit if detailsCache not initialized
+//        if(detailsCache.count() == ) {
+//            log.warn("Details cache has NOT been initialized yet");
+//            return;
+//        }
+
+        log.debug("Synchronizing CameraDetails");
+
+        // get cameras from CameraCache
+        Map<String,Camera> cameraMap = cameraCache.getMap();
+
+        // get cameraDetails from CameraDetailsCache (RAM)
+        Map<String,CameraDetails> detailsMap = detailsCache.getMap();
+
+        // Delete non-exists ---------------------------
+        detailsMap.forEach((name, details) -> {
+            if(!cameraMap.containsKey(name)) {
+                log.info("Delete CameraDetails: {}", name);
+
+                // delete both from RAM and DB
+                this.delete(details);
+            }
+        });
+
+        // create, update ---------------------------
+        cameraMap.forEach((name, camera) -> {
+            //cameraCache.forEach((name, camera) -> {
+
+
+            CameraDetails details = detailsMap.get(name);
+
+            // create new
+            if(details == null) {
+                log.info("Create CameraDetails: {}", name);
+                CameraDetails newDetails = fromCamera(camera);
+
+                // save both to RAM and DB
+                this.save(newDetails);
+            }
+
+            // update existing cameraDetails.commentOrig only on startup
+            // Experimental camera comment importer
+            else if (updateCameraDetailsOnStartup) {
+                if (!camera.getComment().equals(details.getCommentOrig())) {
+
+                    log.info("Update CameraDetails {}, set commentOrig to: {}", name, camera.getComment());
+                    details.setCommentOrig(camera.getComment());
+
+                    // save both to RAM and DB
+                    this.save(details);
+                }
+            }
+        });
+
+        updateCameraDetailsOnStartup = false;
+    }
+
+
+    // ===============================================================================
+
+
+
+    private CameraDetails fromCamera(Camera camera) {
+
+        CameraDetails result;
+
+        Set<CameraGroup> groups = new HashSet<>();
+
+        // Cameras behind NAT
+        if(camera.getAgentId() != null) {
+            groups.add(CameraGroup.NAT);
+        }
+
+        // JURIDIC Cameras in VLAN (Maybe not all cameras)
+        if(camera.getAgentId() == null) {
+            groups.add(CameraGroup.JURIDIC);
+        }
+
+        result = new CameraDetails(camera.getName(), camera.getComment(), groups);
+        result.setEnabled(camera.isEnabled());
+        return result;
+    }
+
+
+//    @Override
+//    public boolean isReady() {
+//        return ready;
+//    }
+//
+//    @Override
+//    public void setReady() {
+//        this.ready = true;
+//    }
+
+}
+
+
+//throw new NotImplementedException();
+
+
+
+
+//    @Override
+//    public void deleteById(Long id) {
+//        detailsRepository.deleteById(id);
+//    }
+//
+//    @Override
+//    public void deleteAllById(Iterable<Long> ids) {
+//        detailsRepository.deleteAllById(ids);
+//    }
+
+
+
+    /*
+
+    public Optional<CameraDetailsEntity> findByName(String name) {
+        return propRepository.findByName(name);
+    }
+
+
+    @Override
+    public CameraDetailsEntity save(CameraDetailsEntity cameraDetailsEntity) {
+        return super.save(cameraDetailsEntity);
+    }
+
+    @Override
+    public List<CameraDetailsEntity> saveAll(Iterable<CameraDetailsEntity> list) {
+        return super.saveAll(list);
+    }
+
+    @Override
+    public void delete(CameraDetailsEntity cameraDetailsEntity) {
+        super.delete(cameraDetailsEntity);
+    }
+
+    @Override
+    public void deleteAllById(Iterable<Long> ids) {
+        super.deleteAllById(ids);
+    }
+         */

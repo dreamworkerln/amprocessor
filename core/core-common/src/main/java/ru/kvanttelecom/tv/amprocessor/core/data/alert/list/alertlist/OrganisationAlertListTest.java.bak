@@ -1,0 +1,20 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import static ru.kvanttelecom.tv.alertmanager.core.data.alert.AlertName.STREAM_DOWN_TEST;
+
+/**
+ * Special AlertList implementation, contains grouping by Stream.organization, Stream.title
+ * <br>
+ * For testing
+ */
+//@Component
+//@Scope("prototype")
+public class OrganisationAlertListTest extends OrganisationAlertList {
+    @Override
+    public String getName() {
+        return STREAM_DOWN_TEST;
+    }
+}

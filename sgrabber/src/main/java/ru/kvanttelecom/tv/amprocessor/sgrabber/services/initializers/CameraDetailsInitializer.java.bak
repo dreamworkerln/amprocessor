@@ -1,0 +1,28 @@
+package ru.kvanttelecom.tv.amprocessor.sgrabber.services.initializers;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.amprocessor.core.db.converters.cameradetails.CameraDetailsConverter;
+import ru.kvanttelecom.tv.amprocessor.core.db.services.CameraDetailsEntityService;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraDetailsCacheService;
+
+@Component
+@Slf4j
+public class CameraDetailsInitializer {
+
+    @Autowired
+    private CameraDetailsConverter converter;
+    @Autowired
+    private CameraDetailsEntityService cameraEntityService;
+
+    /**
+     * Initialize camera details Cache from DB  - run only one time on startup
+     * CameraDetail: DB -> RAM Cache
+     */
+    public void initialize() {
+        log.debug("Initializing CameraDetails Cache from DB");
+        detailsCache.saveList(converter.toDtoList(cameraEntityService.getList()));
+        log.debug("Loaded cameras: {}", detailsCache.count());
+    }
+}

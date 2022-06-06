@@ -1,0 +1,10 @@
+package ru.kvanttelecom.tv.alertmanager.telebot.services.alert;
+
+public interface AlertManagerEventSink {
+
+    /**
+     * Consume alertmanager push notifications
+     * @param json
+     */
+    void sink(String json);
+}

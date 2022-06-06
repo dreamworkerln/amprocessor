@@ -1,0 +1,340 @@
+package ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.services.streams;
+
+import com.github.anhdat.PrometheusApiClient;
+import com.github.anhdat.models.VectorResponse;
+import com.github.anhdat.models.VectorResult;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.data.schema.prometheus.prometheus_series;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.services.telegram.Bot;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.data.StreamKey;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.StreamDto;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.StreamStateDto;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.TriggerState;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.utils.dto.enums.StreamEventType;
+
+import javax.annotation.PostConstruct;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtils.notBlank;
+
+@Service
+@Slf4j
+public class StreamManager {
+
+    public static final int EVENT_COOLDOWN_THRESHOLD_SEC = 3600;
+
+    public static boolean firstRun = true;
+
+
+    @Autowired
+    private PrometheusApiClient apiClient;
+
+    @Autowired
+    private StreamService streamService;
+
+    @Autowired
+    private StreamStateService streamStateService;
+
+    @Autowired
+    private Bot telebot;
+
+    // events handlers
+    protected final ConcurrentMap<StreamEventType, BiConsumer<StreamKey, StringBuilder>> handlers = new ConcurrentHashMap<>();
+
+
+    @PostConstruct
+    private void init() {
+
+//        handlers.put(StreamEventType.CREATED, this::create);
+//        handlers.put(StreamEventType.DELETED, this::delete);
+//        handlers.put(StreamEventType.ENABLED, this::enable);
+//        handlers.put(StreamEventType.UPDATED, this::updated);
+//        handlers.put(StreamEventType.DISABLED, this::disable);
+        handlers.put(StreamEventType.ONLINE, this::online);
+        handlers.put(StreamEventType.OFFLINE, this::offline);
+    }
+
+
+
+
+    /**
+     * Will get all down streams from prometheus, experimental
+     */
+    @SneakyThrows
+    public synchronized void syncAll() {
+
+        // Experimental
+
+        // Get all ----------------------------------------------------------
+        VectorResponse response = apiClient.query(prometheus_series.flussonic.rate_flussonic_stream_bytes_in_1m);
+
+        // no connection to prometheus
+        if(response == null) {
+            return;
+        }
+
+        List<StreamDto> streams = new ArrayList<>();
+        for (VectorResult vector : response.data.result) {
+            StreamDto stream =  vectorToStreamDto(vector);
+            streams.add(stream);
+        }
+
+        streamService.saveAll(streams);
+        streamService.removeNotInList(streams);
+        streamStateService.halfSync(streams);
+
+
+        // set offline ------------------------------------------------------
+
+        // 1. Get offline streams
+        StringBuilder sb = new StringBuilder();
+        response = apiClient.query(prometheus_series.flussonic.down_streams_1m);
+
+        Set<StreamKey> downStreams = new HashSet<>();
+
+        // get streams now offline ------------------------
+        for (VectorResult vector : response.data.result) {
+            StreamKey key = getStreamKey(vector);
+            downStreams.add(key);
+        }
+
+        // handle now offline
+        for (StreamKey key : downStreams) {
+            if(streamService.contains(key)) {
+                handlers.get(StreamEventType.OFFLINE).accept(key, sb);
+            }
+        }
+
+        // get now online ----------------------------------
+        Set<StreamKey> upStreams = new HashSet<>();
+
+        streamStateService.findAll().forEach(s -> {
+            StreamKey key = s.getStreamKey();
+            if (!downStreams.contains(key)) {
+                upStreams.add(key);
+            }
+        });
+
+        // handle now online
+        for (StreamKey key : upStreams) {
+            if(streamService.contains(key)) {
+                handlers.get(StreamEventType.ONLINE).accept(key, sb);
+            }
+        }
+
+
+        // Messaging
+        if (notBlank(sb.toString())) {
+            telebot.sendMessageToGroup(sb.toString().trim());
+        }
+
+    }
+
+
+
+    private StreamDto vectorToStreamDto(VectorResult vector) {
+
+        StreamKey key = getStreamKey(vector);
+        StreamDto result = StreamDto.fromStreamKey(key);
+        result.setAlive(vector.value.get(1) > 0);
+        return result;
+    }
+
+
+    private StreamKey getStreamKey(VectorResult vector) {
+        String hostname = vector.metric.get(prometheus_series.flussonic.metrics.instance)
+            .split("\\.", 2)[0].toLowerCase();
+        String stream = vector.metric.get(prometheus_series.flussonic.metrics.stream);
+        return new StreamKey(hostname, stream);
+    }
+
+
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Stream current state is online
+     */
+    private void online(StreamKey key, StringBuilder sb) {
+
+        StreamStateDto state = streamStateService.get(key);
+        StreamDto stream = streamService.get(key);
+        StreamStateDto.Trigger alert = state.getAlert();
+
+        // detecting Edge-triggered Interrupt
+        // возрастание фронта
+        if (!state.isAlive()) {
+
+            if(alert.getState() == TriggerState.ALERTING) {
+                sb.append("ONLINE: " + stream.getFriendlyName() + "\n");
+            }
+
+            alert.reset();
+            state.setAlive(true);
+            state.setUpFrom(Instant.now());
+            log.debug("ONLINE: " + stream.getFriendlyName());
+        }
+        // Па подъем стрима нет триггера
+    }
+
+    /**
+     * Stream current state is offline
+     */
+    private void offline(StreamKey key, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(key);
+        StreamDto stream = streamService.get(key);
+        StreamStateDto.Trigger alert = state.getAlert();
+
+        // detecting Edge-triggered Interrupt
+        // падение фронта
+        if (state.isAlive()) {
+            alert.set();
+
+            state.setAlive(false);
+            state.setDownFrom(Instant.now());
+            log.debug("OFFLINE: " + stream.getFriendlyName());
+        }
+
+        // проверка срабатывания триггера по времени
+        if(alert.check()) {
+            sb.append("OFFLINE: " + stream.getFriendlyName() + "\n");
+        }
+    }
+
+}
+
+
+
+//
+//    /**
+//     * Update Streams info
+//     * @param events
+//     */
+//    public synchronized void update(List<StreamEventDto> events) {
+//
+//        // Update Streams
+//        StringBuilder sb = new StringBuilder();
+//
+//        // Create new streams ----------------------------------------------------
+//        List<StreamKey> newStreamKeys = events.stream()
+//            .filter(event -> event.getEventTypes().contains(StreamEventType.CREATED))
+//            .map(StreamEventDto::getKey).collect(Collectors.toList());
+//
+//        if(newStreamKeys.size() > 0) {
+//            // get new streams from monitor - batching request
+//            List<StreamDto> newList = rpcClient.findStreamByKey(newStreamKeys);
+//            // create new
+//            newList.forEach(s -> handlers.get(StreamEventType.CREATED).accept(s, sb));
+//        }
+//        // -------------------------------------------------------------------------
+//
+//        // Handle other event types ------------------------------------------------
+//        for (StreamEventDto event : events) {
+//
+//            Set<StreamEventType> eventTypes = event.getEventTypes();
+//            for (StreamEventType eventType : eventTypes) {
+//
+//                // filter out CREATED
+//                if(eventType == StreamEventType.CREATED) {
+//                    continue;
+//                }
+//                StreamDto stream = streamService.get(event.getKey());
+//                if (stream != null) {
+//                    handlers.get(eventType).accept(stream, sb);
+//                }
+//            }
+//        }
+//
+//        if (notBlank(sb.toString())) {
+//            telebot.sendMessageToGroup(sb.toString().trim());
+//        }
+//    }
+
+
+// ===========================================================================
+
+    /*
+
+    private void create(StreamDto stream, StringBuilder sb) {
+        streamService.save(stream);
+        StreamStateDto state = new StreamStateDto(stream.getStreamKey());
+        state.setEnabled(stream.isEnabled());
+        state.setAlive(stream.isAlive());
+        streamStateService.save(state);
+        sb.append("CREATED: " + stream.getFriendlyName() + "\n");
+    }
+
+    private void delete(StreamDto stream, StringBuilder sb) {
+        streamService.remove(stream);
+        sb.append("DELETED: " + stream.getFriendlyName() + "\n");
+    }
+
+    private void updated(StreamDto stream, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(stream.getStreamKey());
+        state.setEnabled(false);
+        sb.append("UPDATED: " + stream.getFriendlyName() + "\n");
+    }
+
+    private void enable(StreamDto stream, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(stream.getStreamKey());
+        state.setEnabled(true);
+        //filterBotMessage("ENABLED: " + stream.getStreamKey() + "\n", state, sb, 1);
+    }
+
+    private void disable(StreamDto stream, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(stream.getStreamKey());
+        state.setEnabled(false);
+        //filterBotMessage("DISABLED: " + stream.getStreamKey() + "\n", state,  sb, 0);
+    }
+
+    private void online(StreamDto stream, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(stream.getStreamKey());
+        state.setAlive(true);
+        state.setUpFrom(Instant.now());
+        filterBotMessage("ONLINE: " + stream.getFriendlyName() + "\n", state,  sb, 1);
+    }
+
+    private void offline(StreamDto stream, StringBuilder sb) {
+        StreamStateDto state = streamStateService.get(stream.getStreamKey());
+        state.setAlive(false);
+        state.setDownFrom(Instant.now());
+        filterBotMessage("OFFLINE: " + stream.getFriendlyName() + "\n", state,  sb, 0);
+    }
+
+
+
+
+    private void filterBotMessage(String text, StreamStateDto stream, StringBuilder sb, int mode) {
+
+        Instant now = Instant.now();
+
+        // ВКЛ
+        if(mode == 1) {
+            if(now.getEpochSecond() - stream.getDownFrom().getEpochSecond() > EVENT_COOLDOWN_THRESHOLD_SEC) {
+                sb.append(text);
+            }
+            else {
+                log.debug("Filtered out: {}", stream.getStreamKey());
+            }
+        }
+
+        // ВЫКЛ
+        if (mode == 0) {
+            if(now.getEpochSecond() - stream.getUpFrom().getEpochSecond() > EVENT_COOLDOWN_THRESHOLD_SEC) {
+                sb.append(text);
+            }
+            else {
+                log.debug("Filtered out: {}", stream.getStreamKey());
+            }
+        }
+    }
+    */

@@ -1,0 +1,84 @@
+package ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.services.streams;
+
+import com.google.common.collect.Maps;
+import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.configurations.properties.BotProperties;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.data.StreamKey;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.StreamDto;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.StreamStateDto;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
+
+@Service("streamStateServiceThreshold")
+public class StreamStateService {
+
+    private final ConcurrentMap<StreamKey, StreamStateDto> states = new ConcurrentHashMap<>();
+
+    @Autowired
+    private BotProperties props;
+
+
+    public List<StreamStateDto> getOffline() {
+        throw new NotImplementedException();
+    }
+
+    public boolean contains(StreamKey key) {
+        return states.containsKey(key);
+    }
+
+    public void save(StreamStateDto state) {
+        states.put(state.getStreamKey(), state);
+    }
+
+
+    public StreamStateDto get(StreamKey key) {
+        return states.get(key);
+    }
+
+    /**
+     * Import new states from streams (if locally not exists)
+     * delete local stream states that not present in list
+     * DO NOT update existing streams
+     * @param list
+     */
+    public void halfSync(Iterable<StreamDto> list) {
+
+        // add new
+        list.forEach(s -> {
+            StreamKey key = s.getStreamKey();
+            if(!states.containsKey(key)) {
+
+                StreamStateDto.Trigger alert = new StreamStateDto.Trigger(props.getPrometheus().getForDuration());
+
+                StreamStateDto state = new StreamStateDto(key);
+                state.setEnabled(s.isEnabled());
+                state.setAlive(s.isAlive());
+                state.setAlert(alert);
+
+                states.put(key, state);
+            }
+        });
+        
+        // remove local not present in list
+        Map<StreamKey, StreamDto> streamUpdate = Maps.uniqueIndex(list, StreamDto::getStreamKey);
+        states.values().removeIf(dto -> !streamUpdate.containsKey(dto.getStreamKey()));
+
+
+    }
+
+    public List<StreamKey> findOffline() {
+        return states.values().stream().filter(st -> st.isEnabled() && !st.isAlive())
+            .map(StreamStateDto::getStreamKey).collect(Collectors.toList());
+    }
+
+    public List<StreamStateDto> findAll() {
+        return new ArrayList<>(states.values());
+    }
+}

@@ -1,0 +1,25 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist;
+
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+
+import java.util.Collection;
+
+/**
+ * List of alerts (with same name)
+ */
+public interface AlertList extends Iterable<Alert> {
+
+    /**
+     * Alert name
+     */
+    String getName();
+
+    void add(Alert alert);
+
+    int size();
+
+    Collection<Alert> getAlerts();
+
+    String toString(MarkupTypeEnum type);
+}

@@ -1,0 +1,31 @@
+package ru.kvanttelecom.tv.alertmanager.configserver.configurations;
+
+
+import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
+import org.springframework.cloud.endpoint.event.RefreshEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
+
+@Configuration
+public class AppEventListener {
+
+//    @EventListener(RefreshScopeRefreshedEvent.class)
+//    public void onRefresh(RefreshScopeRefreshedEvent event) {
+//
+//        System.out.println(" ****************************   RefreshScopeRefreshedEvent listener: " + event.toString());
+//    }
+//
+//    @EventListener(RefreshEvent.class)
+//    public void onRefresh(RefreshEvent event) {
+//
+//        System.out.println(" ****************************   RefreshEvent listener: " + event.toString());
+//    }
+//
+    @EventListener(ApplicationEvent.class)
+    public void onApplicationEvent(ApplicationEvent event) {
+
+        System.out.println(" ****************************   ApplicationEvent listener: " + event.toString());
+    }
+
+}

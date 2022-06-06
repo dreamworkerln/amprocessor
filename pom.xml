@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.6.1</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+    <artifactId>amprocessor</artifactId>
+    <version>0.1</version>
+    <packaging>pom</packaging>
+    <name>amprocessor</name>
+    <description>Alertmanager monitoring and notification processor</description>
+
+    <modules>
+        <module>utils</module>
+
+        <module>core/core-common</module>
+        <module>core/core-telebot</module>
+        <module>core/core-hazelcast</module>
+        <module>core/core-amqp</module>
+        <module>core/core-db</module>
+        <module>core/core-web</module>
+
+        <module>configz/configz-prometheus</module>
+        <module>configz/configz-grafana</module>
+        <module>configz/configz-watcher</module>
+
+        <module>telebot</module>
+        <module>sgrabber</module>
+        <module>flexporter</module>
+        <module>alerthandler</module>
+        <module>mailer</module>
+        <module>configserver</module>
+        <module>cameradetails</module>
+
+
+
+
+    </modules>
+
+    <properties>
+        <java.version>11</java.version>
+        <jdk.version>11</jdk.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <spring-cloud.version>2021.0.0</spring-cloud.version>
+        <org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
+        <com.cosium.spring.data.version>2.5.0</com.cosium.spring.data.version>
+        <org.hazelcast.version>5.0.2</org.hazelcast.version>
+        <!--        <hazelcast.version>5.0.2</hazelcast.version>-->
+        <org.ehcache.version>3.9.9</org.ehcache.version>
+        <org.hibernate.hibernate-jcache.version>5.6.3.Final</org.hibernate.hibernate-jcache.version>
+    </properties>
+
+
+    <dependencies>
+
+        <!--        do not want reload - telegram bot will keep second connection and fail to operate -->
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-devtools</artifactId>-->
+        <!--            <scope>runtime</scope>-->
+        <!--            <optional>true</optional>-->
+        <!--        </dependency>-->
+
+        <!-- Все сервисы захотят подгружать конфиги по сети, кроме configserver'а -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
+        <!-- Включает использование boostrap.properties-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-aop -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Spring cloud config download properties retry system -->
+        <!-- https://mvnrepository.com/artifact/org.springframework.retry/spring-retry -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>android-json</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.7.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/net.tascalate/net.tascalate.concurrent -->
+        <dependency>
+            <groupId>net.tascalate</groupId>
+            <artifactId>net.tascalate.concurrent</artifactId>
+            <version>0.9.4</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.pivovarit/throwing-function -->
+        <dependency>
+            <groupId>com.pivovarit</groupId>
+            <artifactId>throwing-function</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20201115</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
+        </dependency>
+
+
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/commons-validator/commons-validator -->
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.7</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.8.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>30.1-jre</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>2.8.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/net.logstash.logback/logstash-logback-encoder -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.0.1</version>
+        </dependency>
+
+        <!-- annotation @Nullable not found fix -->
+        <!-- https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305 -->
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.javatuples/javatuples -->
+        <dependency>
+            <groupId>org.javatuples</groupId>
+            <artifactId>javatuples</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- local repository (firs clone from github and install locally) -->
+        <!-- https://github.com/anhdat/prometheus4j -->
+        <dependency>
+            <groupId>com.github.anhdat</groupId>
+            <artifactId>prometheus4j</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
+
+        <!-- local repository (firs clone from github and install locally) -->
+        <!-- https://github.com/dreamworkerln/spring-utils-common -->
+        <dependency>
+            <groupId>ru.dreamworkerln.spring</groupId>
+            <artifactId>utils-common</artifactId>
+            <version>0.1</version>
+        </dependency>
+
+
+        <!--        &lt;!&ndash; https://mvnrepository.com/artifact/com.hazelcast/hazelcast &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.hazelcast</groupId>-->
+        <!--            <artifactId>hazelcast</artifactId>-->
+        <!--            <version>5.0.2</version>-->
+        <!--        </dependency>-->
+
+    </dependencies>
+
+
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- Подгружает доп блевотеки Spring Cloud-->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Переопределяем версию hazelcast (из spring-boot-dependencies-2.6.1.pom)-->
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${org.hazelcast.version}</version>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <!--Если не указать зависимости (mapstruct и projectlombok) в annotationProcessorPaths-->
+                    <!--То не будет компилироваться-->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <!-- lombok specified version added in spring-boot-starter-parent-->
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>
+                        <compilerArg>-parameters</compilerArg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!--
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-resources-plugin</artifactId>
+                            <version>3.2.0</version>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.apache.maven.shared</groupId>
+                                    <artifactId>maven-filtering</artifactId>
+                                    <version>3.2.0</version>
+                                </dependency>
+                            </dependencies>
+                        </plugin>
+                        -->
+
+
+            <!--            <plugin>-->
+            <!--                <artifactId>maven-resources-plugin</artifactId>-->
+            <!--                <version>3.2.0</version>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--&lt;!&ndash;                        <id>copy-client-product</id>&ndash;&gt;-->
+            <!--&lt;!&ndash;                        <phase>verify</phase>&ndash;&gt;-->
+            <!--&lt;!&ndash;                        <goals>&ndash;&gt;-->
+            <!--&lt;!&ndash;                            <goal>copy-resources</goal>&ndash;&gt;-->
+            <!--&lt;!&ndash;                        </goals>&ndash;&gt;-->
+            <!--                        <configuration>-->
+            <!--                            <outputDirectory>${basedir}/target</outputDirectory>-->
+
+            <!--                            <resources>-->
+            <!--                                <resource>-->
+            <!--                                    <directory>src/main/resources</directory>-->
+            <!--                                    <excludes>-->
+            <!--                                        <exclude>application*.properties</exclude>-->
+            <!--                                        <exclude>bootstrap*.properties</exclude>-->
+            <!--                                        <exclude>bootstrap-dev.properties</exclude>-->
+            <!--                                    </excludes>-->
+            <!--                                    <filtering>true</filtering>-->
+            <!--                                </resource>-->
+            <!--                            </resources>-->
+            <!--                        </configuration>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+
+            <!--  Exclude user-sensitive data from packaging-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <excludes>
+                        <exclude>application*.properties</exclude>
+                        <exclude>bootstrap*.properties</exclude>
+                        <exclude>application*.yml</exclude>
+                        <exclude>bootstrap*.yml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+
+        <!--        <resources>-->
+        <!--            <resource>-->
+        <!--                <directory>src/main/resources</directory>-->
+        <!--                <excludes>-->
+        <!--                    <exclude>application-*.properties</exclude>-->
+        <!--                    <exclude>bootstrap-*.properties</exclude>-->
+        <!--                </excludes>-->
+        <!--            </resource>-->
+        <!--        </resources>-->
+
+    </build>
+
+
+    <!--    <repositories>-->
+    <!--        <repository>-->
+    <!--            <id>spring-milestones</id>-->
+    <!--            <name>Spring Milestones</name>-->
+    <!--            <url>https://repo.spring.io/milestone</url>-->
+    <!--        </repository>-->
+    <!--    </repositories>-->
+
+</project>

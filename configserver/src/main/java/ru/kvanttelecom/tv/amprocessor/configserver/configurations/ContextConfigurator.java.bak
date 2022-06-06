@@ -1,0 +1,58 @@
+package ru.kvanttelecom.tv.alertmanager.configserver.configurations;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.boot.context.event.ApplicationPreparedEvent;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.context.event.ApplicationStartedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertiesPropertySource;
+import ru.dreamworkerln.spring.utils.common.StringUtilsEx;
+
+import javax.annotation.PostConstruct;
+import java.util.Properties;
+
+@Configuration
+public class ContextConfigurator {
+
+    @Autowired
+    Environment env;
+
+
+    @EventListener(ApplicationEvent.class)
+    public void onApplicationEvent(ApplicationEvent event) {
+
+        if (event instanceof ApplicationStartedEvent) {
+            //System.out.println(" ****************************   ApplicationEvent listener: " + event.toString());
+            //changeSearchLocations();
+        }
+    }
+
+//    @EventListener(ApplicationEvent.class)
+//    public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
+//        ConfigurableEnvironment environment = event.getEnvironment();
+//        Properties props = new Properties();
+//
+//        String key = "spring.cloud.config.server.native.searchLocations";
+//
+//        String value = env.getProperty(key);
+//
+//        if(!StringUtils.isBlank(value)) {
+//
+//            // fix user.dir = "/"
+//            if(value!= null && value.contains("file://")) {
+//                value = value.replace("file://", "file:/");
+//                props.put(key, value);
+//                environment.getPropertySources().addFirst(new PropertiesPropertySource(key, props));
+//            }
+//        }
+//    }
+
+//    private void changeSearchLocations() {
+//
+//    }
+}

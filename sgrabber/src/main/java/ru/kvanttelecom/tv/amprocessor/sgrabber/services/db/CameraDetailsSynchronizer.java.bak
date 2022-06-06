@@ -1,0 +1,159 @@
+package ru.kvanttelecom.tv.amprocessor.sgrabber.services.db;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.kvanttelecom.tv.amprocessor.core.services.camera.CameraDetailsService;
+import ru.kvanttelecom.tv.amprocessor.core.services.camera.CameraService;
+
+
+/**
+ * Load all CameraDetails from DB and write it to cache
+ */
+@Service
+@Slf4j
+public class CameraDetailsSynchronizer {
+
+    private static final CharSequence FRONTEND_URL = "TEST";
+
+    private boolean initializedCameraDetails = false; // update existing cameraDetails only on startup
+
+//    @Autowired
+//    private CameraDetailsRepository detailsRepository;
+
+    @Autowired
+    private CameraService cameraService;
+
+    @Autowired
+    private CameraDetailsService detailsService;
+
+
+//
+//    /**
+//     * Synchronize CameraDetails from CameraCache
+//     */
+//    @Transactional
+//    public void importCameraDetails() {
+//
+//        // exit if cameraCache not initialized
+//        if(detailsService.count() == 0) {
+//            return;
+//        }
+//
+//        log.debug("Synchronizing CameraDetails");
+//
+//        // load cameras from cache
+//        Map<String,Camera> cameraMap = cameraService.getMap();
+//
+//        // load cameraDetails from DB
+//        Map<String,CameraDetails> detailsMap = detailsService.getMap();
+//
+//
+//
+//        //List<CameraDetailsEntity> deleteDetails = new ArrayList<>();
+//        //List<CameraDetailsEntity> newDetails = new ArrayList<>();    // Create new
+//        //List<CameraDetailsEntity> updateDetails = new ArrayList<>(); // Update existing
+//
+//        // Delete non-exists ---------------------------
+//        detailsMap.forEach((name, details) -> {
+//            if(!cameraService.contains(name)) {
+//                log.info("Delete CameraDetails: {}", name);
+//
+//                detailsService.delete(details);
+//            }
+//        });
+//
+//        // create, update ---------------------------
+//        cameraMap.forEach((name, camera) -> {
+//            //cameraCache.forEach((name, camera) -> {
+//
+//
+//            CameraDetails details = detailsMap.get(name);
+//
+//            // create new
+//            if(details == null) {
+//                log.info("Create CameraDetails: {}", name);
+//
+//                CameraDetails newDetails = new CameraDetails(name, null, null, null,
+//                    camera.getComment(), null, null, null);
+//
+//                detailsService.save(newDetails);
+//            }
+//
+//            // update existing cameraDetails only on start
+//            else if (!initializedCameraDetails) {
+//
+//                if (!camera.getComment().equals(details.getCommentOrig())) {
+//                    log.info("Update CameraDetails commentOrig: {}", name);
+//                    details.setCommentOrig(camera.getComment());
+//                    detailsService.save(details);
+//                }
+//            }
+//        });
+//
+////        // Sync to detailCache  --------------------------------------------------------------
+////        // delete
+////        deleteDetails.forEach(details -> detailsCache.remove(details.getName()));
+////
+////        // create & update
+////        List<CameraDetails> saveList = new ArrayList<>(converter.toDtoList(newDetails));
+////        saveList.addAll(converter.toDtoList(updateDetails));
+////        saveList.forEach(details -> detailsCache.set(details));
+//
+//        initializedCameraDetails = true;
+//
+//
+////        list = detailsRepository.findAll();
+////        Map<String,CameraDetails> detailsDto = Maps.uniqueIndex(converter.toDtoList(list), CameraDetails::getName);
+////        MapMirrorMerge.merge(detailsDto, detailsCache);
+//
+//    }
+
+}
+
+
+
+//    @EventListener
+//    public void handleContextRefresh(ApplicationStartedEvent event) {
+//        log.info("Application has been started");
+////        if(haveBeenInitialized) {
+////            return;
+////        }
+////        haveBeenInitialized = true;
+//
+//        // ------------------------
+//
+//        loadCameraDetails();
+//    }
+
+//    private void loadCameraDetails() {
+//
+//        List<CameraDetails> list = converter.toDtoList(detailsRepository.findAll());
+//        Map<String,CameraDetails> detailsMap = Maps.uniqueIndex(list, CameraDetails::getName);
+//
+//
+//
+//        // Move camera.comment to cameraDetails.originalComment
+//        detailsMap.forEach((name, details) -> {
+//            if(cameraCache.containsKey(name)) {
+//
+//                Camera camCached = cameraCache.get(name);
+//                String commentCached = camCached.getComment();
+//
+//                if (isBlank(details.getCommentOrig())) {
+//
+//                    details.setCommentOrig();
+//
+//                }
+//
+//
+//            }
+//
+//        });
+//
+//
+//
+//        MapMirrorMerge.merge(detailsMap, detailsCache);
+//    }
+
+

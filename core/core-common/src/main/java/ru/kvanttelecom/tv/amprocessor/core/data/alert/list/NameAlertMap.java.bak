@@ -1,0 +1,130 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list;
+
+
+import com.google.common.collect.Maps;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist.AlertList;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist.AlertListDefault;
+import ru.kvanttelecom.tv.alertmanager.core.data.annotations.Initializer;
+
+import javax.annotation.PostConstruct;
+import java.beans.Introspector;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.notBlank;
+
+/**
+ * Map of AlertList grouped by Alert.name
+ */
+@Component
+@Scope("prototype")
+public class NameAlertMap {
+
+    private Map<String, AlertList> alerts;
+
+    @Autowired
+    private ApplicationContext context;
+
+    @Autowired
+    private NameAlertMapInitializer initializer;
+
+    @PostConstruct
+    private void init() {
+        initializer.initialise(this);
+    }
+
+    /**
+     * Add new alert
+     */
+    public void add(Alert alert) {
+        // Special AlertList has been already added in init()
+
+        // Add default AlertList
+        AlertList alertList = alerts.computeIfAbsent(alert.getName(), l -> context.getBean(AlertListDefault.class));
+        alertList.add(alert);
+    }
+
+    public Set<Map.Entry<String, AlertList>> entrySet() {
+        return alerts.entrySet();
+    }
+
+    public int size() {
+        return alerts.size();
+    }
+
+
+
+    public String toString(MarkupTypeEnum type) {
+
+        String ALERT_DELIMITER = "\n";  // "======================================================\n";
+        String BOLDER = "";
+
+        switch (type) {
+            
+            case MAIL:             
+                ALERT_DELIMITER = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+                BOLDER = "***";
+                break;
+
+            case TELEGRAM:
+                ALERT_DELIMITER = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+                BOLDER = "*";
+                break;
+        }
+
+
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Map.Entry<String, AlertList> e : alerts.entrySet()) {
+
+            String name = e.getKey();
+            AlertList alertList = e.getValue();
+
+            if(alertList.size() > 0) {
+                sb.append(ALERT_DELIMITER);
+                sb.append(BOLDER + name + BOLDER + "\n");
+                sb.append(ALERT_DELIMITER);
+                sb.append("\n");
+                sb.append(alertList.toString(type));
+            }
+
+        }
+        return sb.toString();
+    }
+
+
+
+    // ==========================================================
+
+    @Initializer
+    private static class NameAlertMapInitializer {
+
+        @Autowired
+        private ApplicationContext context;
+
+        @Autowired
+        private List<AlertList> specialAlertList;
+
+        public void initialise(NameAlertMap me) {
+
+            // remove DefaultAlertList, keep only specialized AlertLists
+            Map<String, Class<? extends AlertList>> namedAlertTypeMap = specialAlertList.stream()
+                .filter(i -> notBlank(i.getName())) // remove default DefaultAlertList, leave only specialized AlertLists
+                .collect(Collectors.toMap(AlertList::getName, AlertList::getClass));
+
+            // fill me.alerts with specialized AlertLists
+            me.alerts = namedAlertTypeMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                    e -> context.getBean(Introspector.decapitalize(e.getValue().getSimpleName()), e.getValue()),
+                    (o1, o2) -> o1, TreeMap::new));
+        }
+    }
+
+}

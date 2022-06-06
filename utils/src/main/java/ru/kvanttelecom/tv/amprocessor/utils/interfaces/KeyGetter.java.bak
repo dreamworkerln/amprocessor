@@ -1,0 +1,5 @@
+package ru.kvanttelecom.tv.amprocessor.utils.interfaces;
+
+public interface KeyGetter<K> {
+    K getKey();
+}

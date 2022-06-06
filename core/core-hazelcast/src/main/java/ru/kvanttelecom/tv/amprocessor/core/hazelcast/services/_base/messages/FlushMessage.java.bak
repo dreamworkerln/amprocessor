@@ -1,0 +1,15 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages;
+
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages.BaseMessage;
+
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * Message, asking some service to persist values by keys from Set<String>
+ */
+public class FlushMessage extends Message<Set<String>> {
+    public FlushMessage(UUID id, Set<String> body) {
+        super(id, body);
+    }
+}

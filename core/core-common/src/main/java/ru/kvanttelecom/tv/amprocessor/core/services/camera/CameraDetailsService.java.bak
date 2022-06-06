@@ -1,0 +1,6 @@
+package ru.kvanttelecom.tv.amprocessor.core.services.camera;
+
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+
+public interface CameraDetailsService extends SomethingService<CameraDetails> {
+}

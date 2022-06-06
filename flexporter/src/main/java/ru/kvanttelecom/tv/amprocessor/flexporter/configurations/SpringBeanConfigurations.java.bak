@@ -1,0 +1,13 @@
+package ru.kvanttelecom.tv.amprocessor.flexporter.configurations;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.aspectj.EnableSpringConfigured;
+import ru.kvanttelecom.tv.amprocessor.flexporter.configurations.properties.FlussonicExporterProperties;
+
+@Configuration
+public class SpringBeanConfigurations {
+
+    @Autowired
+    FlussonicExporterProperties props;
+}

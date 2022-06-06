@@ -1,0 +1,20 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.data;
+
+import ru.kvanttelecom.tv.amprocessor.utils.interfaces.KeyGetter;
+
+public class ModuleState implements KeyGetter<String> {
+
+    public final String moduleName;
+
+    public final ModuleStateType state;
+
+    public ModuleState(String moduleName, ModuleStateType state) {
+        this.moduleName = moduleName;
+        this.state = state;
+    }
+
+    @Override
+    public String getKey() {
+        return moduleName;
+    }
+}

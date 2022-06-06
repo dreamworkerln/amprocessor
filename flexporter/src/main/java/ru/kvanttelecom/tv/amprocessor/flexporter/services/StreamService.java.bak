@@ -1,0 +1,172 @@
+package ru.kvanttelecom.tv.alertmanager.flexporter.services;
+
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.dreamworkerln.spring.utils.common.maps.wrapper.ConcurrentMapWrapper;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+import ru.kvanttelecom.tv.alertmanager.core.hazelcast.services.impl.StreamCache;
+
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+
+/**
+ * Service to calculate Stream rates(liveliness with hysteresis, flapping rate).
+ * <br>
+ * Can import Streams from cache
+ */
+@Service
+@Slf4j
+public class StreamService extends ConcurrentMapWrapper<StreamKey,Stream> {
+
+    // Storage of streams (locally, streams should be loaded from cache first, or added manually)
+    private final ConcurrentMap<StreamKey, Stream> streams = new ConcurrentHashMap<>();
+
+    public StreamService() {
+        super.map = streams;
+    }
+}
+
+
+
+//    public void save(Stream stream) {
+//        streams.put(stream.getKey(), stream);
+//    }
+
+//    public boolean contains(StreamKey key) {
+//        return streams.containsKey(key);
+//    }
+
+    //    /*
+//    public boolean contains(StreamKey key) {
+//        return streams.containsKey(key);
+//    }
+//
+//    public Stream get(StreamKey key) {
+//        return streams.get(key);
+//    }
+//
+//    /**
+//     * Add new Stream
+//     */
+//    public void save(Stream stream) {
+//        streams.put(stream.getKey(), stream);
+//    }
+//
+//    public void saveAll(Iterable<Stream> list) {
+//        streams.putAll(Maps.uniqueIndex(list, Stream::getKey));
+//    }
+//
+//    public void remove(Stream stream) {
+//        streams.remove(stream.getKey());
+//    }
+//
+//    public void remove(StreamKey key) {
+//        streams.remove(key);
+//    }
+//
+//    /**
+//     * Delete local streams that not contain in list
+//     * @param list
+//     */
+//    public void removeNotInList(Iterable<Stream> list) {
+//        // build Map
+//        Map<StreamKey, Stream> streamUpdate = Maps.uniqueIndex(list, Stream::getKey);
+//        streams.values().removeIf(dto -> !streamUpdate.containsKey(dto.getKey()));
+//    }
+//
+//    /**
+//     * Delete local streams that not contain in collection of keys
+//     * @param list
+//     */
+//    public void removeNotInUpdate(Iterable<StreamKey> iterable) {
+//        // build Set
+//        Set<StreamKey> streamUpdate = Sets.newHashSet(iterable);
+//        streams.keySet().removeIf(key -> !streamUpdate.contains(key));
+//    }
+//
+//
+//    public List<Stream> findAllByKeys(Iterable<StreamKey> keys) {
+//
+//        List<Stream> result = new ArrayList<>();
+//
+//        for (StreamKey key : keys) {
+//            if(streams.containsKey(key)) {
+//                result.add(streams.get(key));
+//            }
+//        }
+//
+//        return result;
+//    }
+//
+//    @Override
+//    public int size() {
+//        return streams.size();
+//    }
+//
+//    @Override
+//    public boolean isEmpty() {
+//        return streams.isEmpty();
+//    }
+//
+//    @Override
+//    public boolean containsKey(Object key) {
+//        return streams.containsKey(key);
+//    }
+//
+//    @Override
+//    public boolean containsValue(Object value) {
+//        return streams.containsValue(value);
+//    }
+//
+//    @Override
+//    public Stream get(Object key) {
+//        return streams.get(key);
+//    }
+//
+//    @Override
+//    public Stream put(StreamKey key, Stream value) {
+//        streams.put(key, value);
+//    }
+//
+//    @Override
+//    public Stream remove(Object key) {
+//        return null;
+//    }
+//
+//    @Override
+//    public void putAll(Map<? extends StreamKey, ? extends Stream> m) {
+//
+//    }
+//
+//    @Override
+//    public void clear() {
+//
+//    }
+//
+//    @Override
+//    public Set<StreamKey> keySet() {
+//        return null;
+//    }
+//
+//    @Override
+//    public Collection<Stream> values() {
+//        return null;
+//    }
+//
+//    @Override
+//    public Set<Entry<StreamKey, Stream>> entrySet() {
+//        return null;
+//    }
+//
+//    public Iterable<StreamKey> getKeys() {
+//        return streams.keySet();
+//    }
+

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+        <artifactId>amprocessor</artifactId>
+        <version>0.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>flexporter</artifactId>
+    <name>Flussonic custom exporter</name>
+    <description>
+        Read stream in bitrate metrics from flussonic mediaservers
+        Alter them (append field) and put back to prometheus via micrometer
+    </description>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- micrometer security-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!--module utils -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-common -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-web -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-web</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-hazelcast -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-hazelcast</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+
+        <!--module configz-prometheus -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>configz-prometheus</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+        </plugins>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+    </build>
+
+</project>

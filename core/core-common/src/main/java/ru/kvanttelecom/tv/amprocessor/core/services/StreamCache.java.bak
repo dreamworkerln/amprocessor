@@ -1,0 +1,12 @@
+package ru.kvanttelecom.tv.alertmanager.core.services;
+
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+
+import java.util.Map;
+
+public interface StreamCache {
+    Stream get(StreamKey key);
+    Stream set(Stream stream);
+    void mirror(Map<StreamKey, Stream> from);
+}

@@ -1,0 +1,87 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import ru.dreamworkerln.spring.utils.common.StringUtils;
+import ru.kvanttelecom.tv.alertmanager.core.data.subject.Subject;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Duration;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtils.*;
+
+@Slf4j
+public class AlertFormatter {
+
+    public static String toString(Alert alert) {
+        StringBuilder sb = new StringBuilder();
+        String status;
+
+        // Alert -------------
+
+        // Adds 🔥 if alert is FIRING
+        status = alert.getStatus() == AlertStatus.FIRING ?
+            "🔥 *" + alert.getStatus().toString() +"* 🔥"
+            : alert.getStatus().toString();
+
+        // Name
+        sb.append(status + "    " + alert.getName() + '\n');
+
+        // Subject -----------
+
+        // Title
+        Subject subject = alert.getSubject();
+        sb.append("*" + subject.getTitle() + "*" + '\n');
+
+        if (subject instanceof Stream) {
+            Stream stream = (Stream)subject;
+
+            String organization = stream.getOrganization();
+            if(isBlank(organization)) {
+                organization = "UNKNOWN";
+            }
+            sb.append("Organization: " + organization +'\n');
+            
+            if(stream.getAgentId() != null) {
+                sb.append("Agent: ON"+ '\n');
+            }
+            else if (notBlank(stream.getStreamUrl())) {
+                String streamIP = "CANT PARSE URL";
+                try {
+                    URL url;
+                    String u = stream.getStreamUrl();
+                    url = new URL(u);
+                    streamIP = url.getHost();
+
+                } catch (MalformedURLException skip) {
+                    String message = formatMsg("Can't parse URL");
+                    log.warn(message, skip);
+                }
+                sb.append("IP: "+ streamIP + '\n');
+            }
+        }
+
+
+        // referenceURL (ON FIRING) / Instance (ON RESOLVED)
+        String referenceURL = alert.getInstance();
+        if(notBlank(alert.getSubject().getReferenceUrl())) {
+            referenceURL = alert.getSubject().getReferenceUrl();
+        }
+
+        if (alert.getStatus() == AlertStatus.FIRING) {
+            sb.append(referenceURL + '\n');
+        }
+        else {
+            sb.append("Instance: " + alert.getInstance() + '\n');
+        }
+
+        // add alert duration (время выставления тревоги не учитывается)
+        if(!alert.getDuration().equals(Duration.ZERO)) {
+            sb.append("Duration: " + formatDuration(alert.getDuration()));
+        }
+        return sb.toString();
+    }
+
+}

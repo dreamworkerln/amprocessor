@@ -1,0 +1,27 @@
+package ru.kvanttelecom.tv.alertmanager.alerthandler.data.parsers;
+
+import org.json.JSONObject;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.subject.DefaultSubject;
+import ru.kvanttelecom.tv.alertmanager.core.data.subject.Subject;
+
+import java.util.Map;
+
+import static ru.kvanttelecom.tv.alertmanager.utils.dto.constants.Common.PROMETHEUS_INSTANCE_KEY;
+
+//@Component
+public class NodeExporterParser implements SubjectParser {
+
+    @Override
+    public String getId() {
+        return "InstanceDown";
+    }
+
+
+    @Override
+    public Subject parse(Alert alert, JSONObject event) {
+        String name = alert.getInstance();
+        // Surrogate Subject
+        return new DefaultSubject(alert.getInstance(), alert.getTitle(), Map.of(PROMETHEUS_INSTANCE_KEY, alert.getInstance()));
+    }
+}

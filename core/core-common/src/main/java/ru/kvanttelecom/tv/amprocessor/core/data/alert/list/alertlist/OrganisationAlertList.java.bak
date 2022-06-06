@@ -1,0 +1,125 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist;
+
+import lombok.Getter;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.formatMsg;
+import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.notBlank;
+import static ru.kvanttelecom.tv.alertmanager.core.data.alert.AlertName.STREAM_DOWN;
+
+/**
+ * Special AlertList implementation, contains grouping by Stream.organization, Stream.title
+ */
+@Component
+@Scope("prototype")
+public class OrganisationAlertList implements AlertList {
+
+    protected String ORGANISATION_FORMATTER = "Организация: {}\n";
+
+    @Getter
+    protected SortedMap<String, SimpleAlertList> organisations = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    @Override
+    public String getName() {
+        return STREAM_DOWN;
+    }
+
+    @Override
+    public void add(Alert alert) {
+
+        if(!(alert.getSubject() instanceof Stream)) {
+            throw new IllegalArgumentException("Subject.class != Stream");
+        }
+        String organisationName = ((Stream)alert.getSubject()).getOrganization();
+        // Unknown org fix
+        organisationName = notBlank(organisationName) ? organisationName : "UNKNOWN";
+
+        SimpleAlertList alerts = organisations.computeIfAbsent(organisationName, l -> new SimpleAlertList());
+        alerts.add(alert);
+    }
+
+    @Override
+    public int size() {
+        return (int)organisations.values().stream().mapToLong(SimpleAlertList::size).sum();
+    }
+
+    @Override
+    public Iterator<Alert> iterator() {
+        return
+            organisations.values().stream().flatMap(al -> al.getAlerts().stream()).collect(Collectors.toList()).iterator();
+    }
+
+//        Iterator<Alert> it = new Iterator<Alert>() {
+//            @Override
+//            public boolean hasNext() {
+//                return false;
+//            }
+//
+//            @Override
+//            public Alert next() {
+//                return null;
+//            }
+//        }
+
+
+//    public Set<Map.Entry<String, SimpleAlertList>> getOrganisations() {
+//        return organisations.entrySet();
+//    }
+
+    @Override
+    public Collection<Alert> getAlerts() {
+        return organisations.values().stream().flatMap(al -> al.getAlerts().stream()).collect(Collectors.toList());
+    }
+
+
+    public String toString(MarkupTypeEnum type) {
+
+        switch (type) {
+
+            case MAIL:
+                ORGANISATION_FORMATTER = "------------------------------------------------------\n" +
+                    "Организация: {}\n" +
+                    "-----------\n\n";
+                break;
+
+
+            case TELEGRAM:
+                ORGANISATION_FORMATTER = "-----------------------------------------\n" +
+                    "Организация: *{}*\n" +
+                    "\n";
+                break;
+        }
+
+
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Map.Entry<String, SimpleAlertList> org : organisations.entrySet()) {
+
+            String orgName = org.getKey();
+            SimpleAlertList alerts = org.getValue();
+
+            if(alerts.size() > 0) {
+
+                // organisation header
+                sb.append(formatMsg(ORGANISATION_FORMATTER, orgName));
+
+                // alert list
+                for (Alert alert : alerts) {
+                    sb.append(alert.toString(type));
+                    sb.append("\n");
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+
+}

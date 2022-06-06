@@ -1,0 +1,4 @@
+package ru.kvanttelecom.tv.amprocessor.telebot.services.mail.subjectlist;
+
+public interface AlertList {
+}

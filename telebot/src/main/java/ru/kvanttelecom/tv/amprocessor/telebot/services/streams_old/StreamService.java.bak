@@ -1,0 +1,69 @@
+package ru.kvanttelecom.tv.streammonitoring.alertmanager.bot.services.streams;
+
+import com.google.common.collect.Maps;
+import org.springframework.stereotype.Service;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.data.StreamKey;
+import ru.kvanttelecom.tv.streammonitoring.alertmanager.core.dto.stream.StreamDto;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+@Service
+public class StreamService {
+
+    private final ConcurrentMap<StreamKey, StreamDto> streams = new ConcurrentHashMap<>();
+
+    public boolean contains(StreamKey key) {
+        return streams.containsKey(key);
+    }
+
+    public StreamDto get(StreamKey key) {
+        return streams.get(key);
+    }
+
+    public void save(StreamDto stream) {
+        streams.put(stream.getStreamKey(), stream);
+    }
+
+    public void saveAll(Iterable<StreamDto> list) {
+        streams.putAll(Maps.uniqueIndex(list, StreamDto::getStreamKey));
+    }
+
+    public void remove(StreamDto stream) {
+        streams.remove(stream.getStreamKey());
+    }
+
+    public int count() {
+        return streams.size();
+    }
+
+
+
+    /**
+     * Delete local streams that not contain in list
+     * @param list
+     */
+    public void removeNotInList(Iterable<StreamDto> list) {
+        // build Map
+        Map<StreamKey, StreamDto> streamUpdate = Maps.uniqueIndex(list, StreamDto::getStreamKey);
+        streams.values().removeIf(dto -> !streamUpdate.containsKey(dto.getStreamKey()));
+    }
+
+
+    public List<StreamDto> findAllByKeys(Iterable<StreamKey> keys) {
+
+        List<StreamDto> result = new ArrayList<>();
+
+        for (StreamKey key : keys) {
+            if(streams.containsKey(key)) {
+                result.add(streams.get(key));
+            }
+        }
+
+        return result;
+    }
+
+}

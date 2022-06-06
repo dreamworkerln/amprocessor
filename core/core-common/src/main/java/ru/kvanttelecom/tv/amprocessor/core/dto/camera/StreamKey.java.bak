@@ -1,0 +1,52 @@
+package ru.kvanttelecom.tv.alertmanager.core.dto.stream;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
+import ru.dreamworkerln.spring.utils.common.annotations.Default;
+
+import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.formatMsg;
+
+@Data
+@EqualsAndHashCode(callSuper = false)
+@Slf4j
+public class StreamKey {
+
+    private final String hostname;
+    private final String name;
+
+
+
+    public static StreamKey fromString(String string) {
+        String host;
+        String stream;
+        try {
+            String[] tmp = string.split("\\.", 2);
+            host = tmp[0];
+            stream = tmp[1];
+        }
+        catch (Exception rethrow) {
+            String msg = formatMsg("StreamKey.fromString invalid string: {}", string);
+            log.error(msg, rethrow);
+            throw new IllegalArgumentException(msg);
+        }
+        return new StreamKey(host, stream);
+    }
+
+    @Default
+    @JsonCreator
+    public StreamKey(String hostname, String name) {
+        this.hostname = hostname;
+        this.name = name;
+    }
+
+    public StreamKey clone() {
+        return new StreamKey(hostname, name);
+    }
+
+    @Override
+    public String toString() {
+        return hostname + "." + name;
+    }
+}

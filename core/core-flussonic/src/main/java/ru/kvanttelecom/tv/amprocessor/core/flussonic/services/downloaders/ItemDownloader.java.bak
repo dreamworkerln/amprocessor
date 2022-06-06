@@ -1,0 +1,20 @@
+package ru.kvanttelecom.tv.alertmanager.sgrabber.services.flussonic.downloader;
+
+
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ItemDownloader<K,V> {
+    /**
+     * Download all available streams
+     */
+    List<V> getAll();
+
+    /**
+     * Download stream by name
+     */
+    Optional<V> getOne(K key);
+}

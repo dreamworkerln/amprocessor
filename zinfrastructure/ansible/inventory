@@ -1,0 +1,19 @@
+[amprocessor_host]
+promvirtual-root
+
+[u3-root]
+u3-root
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args='-F /home/khatuncev/.ssh/config'
+#ansible_ssh_common_args='-F ~/.ssh/config'
+
+
+
+#[amprocessor:vars]
+#ansible_python_interpreter=/usr/bin/python3
+#ansible_ssh_common_args='-F ~/.ssh/config'
+
+
+

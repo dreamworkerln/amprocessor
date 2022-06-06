@@ -1,0 +1,387 @@
+package ru.kvanttelecom.tv.streammonitoring.alerters.threshold.services.telegram;
+
+import com.google.common.collect.Maps;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
+import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.SendResponse;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.math3.util.Pair;
+import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.validator.routines.IntegerValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.dreamworkerln.spring.utils.common.threadpool.BlockingJobPool;
+import ru.dreamworkerln.spring.utils.common.threadpool.JobResult;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+import ru.kvanttelecom.tv.alertmanager.tbot.configurations.properties.TBotProperties;
+import ru.kvanttelecom.tv.alertmanager.tbot.services.amqp.StreamRpcClient;
+
+import javax.annotation.PostConstruct;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.springframework.util.StringUtils.*;
+import static ru.dreamworkerln.spring.utils.common.StringUtils.isBlank;
+
+@Service
+@Slf4j
+public class Telebot {
+
+    private static final int TELEGRAM_MAX_MESSAGE_LENGTH = 4000;
+    private static final Duration TELEGRAM_SEND_TIMEOUT_MIN = Duration.ofSeconds(2);
+    private static final Duration TELEGRAM_SEND_TIMEOUT_MAX = Duration.ofSeconds(32);
+    private final AtomicReference<Duration> telegramSendTimeout = new AtomicReference<>(TELEGRAM_SEND_TIMEOUT_MIN);
+
+    // messages handlers
+    private final ConcurrentMap<String, BiConsumer<Long, String>> handlers = new ConcurrentHashMap<>();
+
+    private DecimalFormat df;
+
+    private TelegramBot bot;
+
+
+
+    private static final String HELP_CONTENT =
+        "/streams - list of not working streams" +
+            "\n" + "/flap - list of flapping streams" +
+            "\n" + "/help - this help" +
+            "\n" + "/echo [text] - echo [text]" +
+            "\n" + "/ping - echo-reply";
+
+    //private static final Splitter TELEGRAM_LENGTH_SPLITTER = Splitter.fixedLength(TELEGRAM_MAX_MESSAGE_LENGTH);
+
+
+    // Non-negative AtomicInteger incrementator
+    //private final LongUnaryOperator idIncrementator = (i) -> i == Long.MAX_VALUE ? 0 : i + 1;
+    // connection id generator
+    //private final AtomicLong idGen =  new AtomicLong();
+    //private final ConcurrentMap<Long, SendMessage> messageQueue = new ConcurrentHashMap<>();
+
+    private final BlockingJobPool<SendMessage,SendResponse> jobPool =
+        new BlockingJobPool<>(5, TELEGRAM_SEND_TIMEOUT_MIN, null);
+
+
+    @Autowired
+    TBotProperties props;
+
+    @Autowired
+    StreamRpcClient rpcClient;
+
+    //@Autowired
+    //private StreamMap streams;
+
+
+
+    @PostConstruct
+    private void postConstruct() {
+        log.info("Staring telegram bot");
+
+        DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
+        otherSymbols.setDecimalSeparator('.');
+        //df = new DecimalFormat("#.###", otherSymbols);
+        df = new DecimalFormat("#", otherSymbols);
+
+
+
+        handlers.put("/start",   this::start);
+        handlers.put("/help",    this::help);
+        handlers.put("/echo",    this::echo);
+        handlers.put("/ping",    this::ping);
+        handlers.put("/streams", this::streams);
+        handlers.put("/flap",    this::flapping);
+
+
+
+        bot = new TelegramBot.Builder(props.getBotToken()).build();
+
+        bot.setUpdatesListener(updates -> {
+
+            // process updates
+            for (Update update : updates) {
+
+                try {
+
+                    Long chatId = update.message().chat().id();
+                    String text = update.message().text();
+
+                    if (isBlank(text)) {
+                        continue;
+                    }
+
+                    String[] commandArray = text.split("[ @]");
+                    if (commandArray.length > 0) {
+                        String command = commandArray[0];
+
+                        if (handlers.containsKey(command)) {
+                            String body = trimWhitespace(text.substring(command.length()));
+
+                            handlers.get(command).accept(chatId, body);
+                        }
+                    }
+
+                }
+                catch (Exception e) {
+                    log.error("bot receive/handle message error: ", e);
+                }
+            }
+
+            // return id of last processed update or confirm them all
+            return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        });
+    }
+
+
+
+    // -------------------------------------------------------------------------------
+
+    private void start(Long chatId, String text) {
+
+        // permanent keyboard
+        Keyboard replyKeyboardMarkup = new ReplyKeyboardMarkup("/streams")
+            .oneTimeKeyboard(false)
+            .resizeKeyboard(true)
+            .selective(true);
+
+        sendMessage(chatId, HELP_CONTENT, replyKeyboardMarkup);
+    }
+
+    private void help(Long chatId, String text) {
+        SendResponse response = sendMessage(chatId, HELP_CONTENT);
+        //"\n" + "Streams info: " + PROTOCOL + props.getAddress() + "/streams" + "\n";
+    }
+
+    private void echo(Long chatId, String text) {
+        SendResponse response = sendMessage(chatId, text);
+
+    }
+
+    private void ping(Long chatId, String text) {
+        SendResponse response = sendMessage(chatId, "pong");
+    }
+
+
+    /**
+     * Show offline streams
+     */
+    @SneakyThrows
+    private void streams(Long chatId, String text) {
+
+        // remove bot name
+        text = text.replaceAll("@.*? ", "");
+
+        List<StreamKey> keys;
+
+        if(isBlank(text)) {
+            keys = rpcClient.findOffline();
+        }
+        else {
+            DoubleValidator dv = DoubleValidator.getInstance();
+            double hours = 5;
+            if(dv.isValid(text, Locale.US)) {
+                NumberFormat format = NumberFormat.getInstance(Locale.US);
+                Number number = format.parse(text);
+                hours = number.doubleValue();
+            }
+            Duration duration = Duration.ofMinutes(Math.round(hours * 60));
+            keys = rpcClient.findOfflineWithDuration(duration);
+        }
+
+        // get offline streams
+        List<StreamDto> streams = rpcClient.findStreamByKeyList(keys);
+
+        List<String> linesDown = new ArrayList<>();
+        List<String> linesFlap = new ArrayList<>();
+
+
+        StringBuilder sb = new StringBuilder();
+        for (StreamDto stream  : streams) {
+
+            String title = stream.getFriendlyTitle();
+            boolean isFlapping = stream.isFlapping();
+
+            if(isFlapping) {
+                linesFlap.add(title + "\n");
+            }
+            else {
+                linesDown.add(title + "\n");
+            }
+        }
+
+        linesDown.sort(Comparator.comparing(Function.identity(), String.CASE_INSENSITIVE_ORDER));
+        linesFlap.sort(Comparator.comparing(Function.identity(), String.CASE_INSENSITIVE_ORDER));
+
+
+        if(linesDown.size() > 0) {
+            sb.append("DOWN STREAMS:\n");
+            linesDown.forEach(sb::append);
+        }
+
+        if(linesFlap.size() > 0) {
+            sb.append("\nFLAPPING STREAMS:\n");
+            linesFlap.forEach(sb::append);
+        }
+
+        if(linesDown.size() == 0 && linesFlap.size() == 0) {
+            sb.append("ALL ONLINE");
+        }
+
+        SendResponse response = sendMessage(chatId, sb.toString());
+    }
+
+
+
+
+
+    private void flapping(Long chatId, String text) {
+
+        StringBuilder sb = new StringBuilder();
+        Map<StreamKey,Double> flapping = rpcClient.findFlappingStreams();
+
+        if(flapping.size() > 0) {
+            Map<StreamKey, StreamDto> keyToStream =
+                Maps.uniqueIndex(rpcClient.findStreamByKeyList(flapping.keySet()), StreamDto::getStreamKey);
+
+            List<Pair<StreamDto, Double>> list = new ArrayList<>();
+            flapping.forEach((key, value) -> list.add(new Pair<>(keyToStream.get(key), value)));
+            list.sort(Comparator.comparing(Pair::getSecond));
+            Collections.reverse(list);
+
+            for (Pair<StreamDto, Double> pair : list) {
+                String title = pair.getFirst().getFriendlyTitle();
+                String freq = df.format(pair.getSecond());
+                sb.append(title).append("    (").append(freq).append(" s)\n");
+            }
+        }
+        else {
+            sb.append("No info");
+        }
+        SendResponse response = sendMessage(chatId, sb.toString());
+    }
+
+
+
+    private List<String> stringSplitter(String text) {
+
+        if(text.charAt(text.length() - 1) != '\n') {
+            text = text.concat("\n");
+        }
+
+        List<String> result = new ArrayList<>();
+        int length = Integer.MAX_VALUE;
+
+
+        while ((length = Math.min(text.length(), TELEGRAM_MAX_MESSAGE_LENGTH)) > 0) {
+
+            while (length > 0 && text.charAt(length - 1) != '\n') {
+                length--;
+            }
+            result.add(text.substring(0, length));
+            text = text.substring(length);
+        }
+
+        return result;
+    }
+
+
+
+    @SneakyThrows
+    public SendResponse sendMessage(Long chatId, String message) {
+        return sendMessage(chatId, message, null);
+    }
+
+    /**
+     * Send message to telegram
+     * @param chatId whom
+     * @param message text
+     * @return SendResponse
+     */
+    @SneakyThrows
+    public SendResponse sendMessage(Long chatId, String message, Keyboard keyboard) {
+
+        if(isBlank(message)) {
+            return null;
+        }
+
+        SendResponse result = null;
+
+        // разбивка по страницам 4k
+        List<String> lines = stringSplitter(message);
+        for (int i = 0; i < lines.size(); i++) {
+
+            String chunk = lines.get(i);
+
+            SendMessage msg = new SendMessage(chatId, chunk);
+
+            // add keyboard to last message
+            if(keyboard != null && i == lines.size() - 1) {
+                msg.replyMarkup(keyboard);
+            }
+
+            Throwable exception;
+            do {
+
+                // отправка
+                JobResult<SendMessage,SendResponse> jobResult = jobPool.execTimeout(msg,
+                    a -> new JobResult<>(msg, bot.execute(msg)), telegramSendTimeout.get());
+
+                exception = jobResult.getException();
+                result = jobResult.getResult();
+                //log.debug("Telebot send result: {}", result);;
+
+                // need to wait on error
+                if(exception != null) {
+
+                    log.debug("Telebot send exception:", exception);
+
+                    // дополнительно ждем
+                    Thread.sleep(telegramSendTimeout.get().toMillis());
+                    // increase timeout
+                    calculateNewDuration(+1);
+                }
+                else {
+                    // decrease timeout
+                    calculateNewDuration(-1);
+                }
+            }
+            while (exception != null);
+        }
+
+        return result;
+    }
+
+    private void calculateNewDuration(int direction) {
+
+        telegramSendTimeout.getAndUpdate(d -> {
+
+            Duration result = d;
+            if (direction == 1) {
+                result = d.multipliedBy(2);
+            }
+            if (direction == -1) {
+                result = d.dividedBy(2);
+            }
+
+            if (result.toSeconds() > TELEGRAM_SEND_TIMEOUT_MAX.toSeconds() ||
+                result.toSeconds() < TELEGRAM_SEND_TIMEOUT_MIN.toSeconds()) {
+                result = d;
+            }
+            return result;
+        });
+    }
+
+
+}

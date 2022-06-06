@@ -1,0 +1,80 @@
+# DEPLOY DOCKER & DOCKER-COMPOSE
+- name: Install docker & docker-compose
+  hosts: "{{ variable_host | default('amprocessor_host') }}"
+  tags: ['never','install_docker']
+  tasks:
+    - name: install docker (only for ubuntu 18 bionic)
+      ansible.builtin.shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+        apt update
+        apt install -y docker-ce
+      args:
+        warn: false
+
+    - name: install docker-compose
+      ansible.builtin.shell: |
+        curl -L https://github.com/docker/compose/releases/download/v2.0.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      args:
+        warn: false
+
+    - name: Check docker, docker-compose
+      ansible.builtin.shell: |
+        systemctl status docker
+        echo ""
+        docker -v
+        docker-compose -v
+      register: output
+    - debug: var=output.stdout_lines
+
+# DEPLOY AMPROCESSOR
+- name: Deploy amprocessor
+  hosts: "{{ variable_host | default('amprocessor_host') }}"
+  tasks:
+    - name: pull docker images
+#      when: 0 > 1
+      ansible.builtin.shell: |
+        docker pull dreamworkerln/amprocessor-configserver:{{ tag | default('latest') }}
+        docker pull dreamworkerln/amprocessor-sgrabber:{{ tag | default('latest')}}
+        docker pull dreamworkerln/amprocessor-flexporter:{{ tag | default('latest')}}
+        docker pull dreamworkerln/amprocessor-alerthandler:{{ tag | default('latest')}}
+        docker pull dreamworkerln/amprocessor-telebot:{{ tag | default('latest')}}
+        docker pull dreamworkerln/amprocessor-mailer:{{ tag | default('latest')}}
+        docker pull dreamworkerln/amprocessor-cameradetails:{{ tag | default('latest')}}
+      register: output
+    - debug: var=output.stdout_lines
+
+
+    - name: create amprocessor directories
+      file:
+        path: /usr/local/bin/amprocessor/
+        state: directory
+
+
+    - name: Copy settings
+      synchronize:
+        src: "{{ playbook_dir }}/../compose/target/"
+        dest: /usr/local/bin/amprocessor/
+        delete: yes
+#        rsync_opts:
+#          - "--exclude=copy_properties.sh"
+
+
+    - name: restart docker-compose stack
+      ansible.builtin.shell: |
+        cd /usr/local/bin/amprocessor/
+        ./stop.sh
+        ./start.sh
+        
+        
+
+
+
+#    - name: prepare local configs
+#      when: "'dev' not in ansible_run_tags"
+#      tags: always
+
+
+
+

@@ -1,0 +1,9 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera;
+
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+
+public interface CameraServiceEx {
+
+    CameraService cameraService();
+    Camera saveNoIntercept(Camera camera);
+}

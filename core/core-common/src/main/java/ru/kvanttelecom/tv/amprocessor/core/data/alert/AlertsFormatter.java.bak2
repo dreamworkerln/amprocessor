@@ -1,0 +1,205 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.web.util.UriUtils;
+import ru.dreamworkerln.spring.utils.common.StringUtils;
+import ru.kvanttelecom.tv.alertmanager.core.data.subject.Subject;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.io.IOException;
+import java.net.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
+import static ru.dreamworkerln.spring.utils.common.StringUtils.*;
+import static ru.dreamworkerln.spring.utils.common.StringUtils.notBlank;
+
+
+@Slf4j
+public class AlertsFormatter {
+
+    private static final DateTimeFormatter formatterLocal =
+        DateTimeFormatter.ofLocalizedDateTime( FormatStyle.SHORT )
+            .withZone(ZoneId.systemDefault());
+
+    /**
+     * Return lines of alert titles, grouped by alert type
+     */
+    public static String formatGrouped(List<Alert> alerts) {
+
+
+        Map<String, Map<AlertStatus,List<Alert>>> downWithStatus = alerts.stream()
+            .collect(groupingBy(Alert::getName,groupingBy(Alert::getStatus)));
+
+        StringBuilder sb = new StringBuilder();
+
+        for (Map.Entry<String, Map<AlertStatus,List<Alert>>> entry : downWithStatus.entrySet()) {
+
+            String alertName = entry.getKey();
+            for (Map.Entry<AlertStatus,List<Alert>> entry2 : entry.getValue().entrySet()) {
+
+                AlertStatus status = entry2.getKey();
+                List<Alert> alertList =  entry2.getValue();
+
+                List<Pair<String,String>> pairList = appendAlertType(alertList);
+                if(pairList.size() > 0) {
+
+                    String statusStr = status == AlertStatus.FIRING ?
+                        "🔥 *" + status.toString() +"* 🔥" : status.toString();
+
+                    sb.append("Alerts " + statusStr + ": " + "*" + alertName + "*" + "\n\n");
+                    for (Pair<String, String> pair : pairList) {
+                        sb.append(pair.getRight() + '\n');
+                    }
+                }
+            }
+        }
+        
+        return sb.toString();
+    }
+
+
+    //             List<Subject,Pair<Subject.title,Subject.toString()>>
+    private static List<Pair<String,String>> appendAlertType(List<Alert> alerts) {
+        return
+            alerts.stream()
+                .map(a -> Pair.of(a.getSubject().getTitle(), alertFormatter(a)))
+                .sorted(Comparator.comparing(Pair::getLeft, String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+    }
+
+
+    private static String alertFormatter(Alert alert) {
+
+        StringBuilder sb = new StringBuilder();
+
+        Subject subject = alert.getSubject();
+        sb.append("*" + subject.getTitle() + "*" + '\n');
+
+        if (subject instanceof Stream) {
+            Stream stream = (Stream)subject;
+
+            String organization = stream.getOrganization();
+            if(isBlank(organization)) {
+                organization = "UNKNOWN";
+            }
+            sb.append("Организация: " + organization +'\n');
+
+            if(stream.getAgentId() != null) {
+                sb.append("Агент: ON"+ '\n');
+            }
+            else if (notBlank(stream.getStreamUrl())) {
+                String streamIP = "CANT PARSE URL";
+                try {
+                    String u = stream.getStreamUrl();
+                    URI uri = new URI(u);
+                    streamIP = uri.getHost();
+
+                } catch (Exception skip) {
+                    String message = formatMsg("Can't parse URL");
+                    log.warn(message, skip);
+                }
+                sb.append("IP: "+ streamIP + '\n');
+            }
+        }
+
+
+        // referenceURL (ON FIRING) / Instance (ON RESOLVED)
+        String referenceURL = alert.getInstance();
+        if(notBlank(alert.getSubject().getReferenceUrl())) {
+            referenceURL = alert.getSubject().getReferenceUrl();
+        }
+
+        if (alert.getStatus() == AlertStatus.FIRING || alert.getStatus() == AlertStatus.PENDING) {
+            sb.append(referenceURL + '\n');
+        }
+        else {
+            sb.append("Instance: " + alert.getInstance() + '\n');
+        }
+
+        sb.append("Начало: " + formatterLocal.format(alert.getStartsAt()) + '\n');
+
+        // add alert duration (время выставления тревоги не учитывается)
+        if(!alert.getDuration().equals(Duration.ZERO)) {
+            sb.append("Продолжительность: " + formatDuration(alert.getDuration()) + '\n');
+        }
+        return sb.toString();
+    }
+
+    public static String formatDuration(Duration d) {
+
+        String result;
+        if(d.toDays() == 0) {
+            result = DurationFormatUtils.formatDuration(d.toMillis(),
+                "HH:mm:ss", true);
+        }
+        else {
+            String days = d.toDays() == 1 ? "day" : "days";
+            String format = StringUtils.formatMsg("d '{}' HH:mm:ss", days);
+            result = DurationFormatUtils.formatDuration(d.toMillis(), format, true);
+        }
+
+        return result;
+    }
+
+
+//
+//    /**
+//     * Return lines of alert titles with referencedURLs, grouped by alert type
+//     */
+//    public static String formatWithLinksGrouped(List<Alert> alerts) {
+//
+//        Map<String, List<Alert>> downWithTypes = alerts.stream()
+//            .collect(groupingBy(Alert::getName));
+//
+//        StringBuilder sb = new StringBuilder();
+//        if(alerts.size() > 0) {
+//            sb.append("Alerts firing:\n");
+//        }
+//
+//        for (Map.Entry<String, List<Alert>> entry : downWithTypes.entrySet()) {
+//
+//            String alertName = entry.getKey();
+//
+//
+//            List<Pair<String,String>> down = entry.getValue().stream()
+//                .map(a -> Pair.of(a.getSubject().getTitle(), a.getSubject().getReferenceUrl()))
+//                .sorted(Comparator.comparing(Pair::getLeft, String.CASE_INSENSITIVE_ORDER))
+//                .collect(Collectors.toList());
+//
+//            if(down.size() > 0) {
+//                sb.append("\n" + "*" + alertName + ":*" + "\n");
+//            }
+//            down.forEach((p) -> sb.append(p.getLeft() + "\n" + p.getRight() + "\n"));
+//        }
+//
+//        if(alerts.size() == 0) {
+//            sb.append("No firing alerts");
+//        }
+//
+//        return sb.toString();
+//    }
+}
+
+
+
+//                // Remove firing alerts that happened long time ago
+//                if (showOnlyNew) {
+//                    alertList.removeIf(a -> a.getStatus() == AlertStatus.FIRING &&
+//                        Duration.between(a.startsAt, Instant.now()).toSeconds() > a.forr.toSeconds() * 1.5);
+//
+//                    alertList.removeIf(a -> a.getStatus() == AlertStatus.RESOLVED &&
+//                        Duration.between(a.endsAt, Instant.now()).toSeconds() > a.forr.toSeconds() * 1.5);
+//
+//                }

@@ -1,0 +1,48 @@
+package ru.kvanttelecom.tv.alertmanager.core.services;
+
+import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.kvanttelecom.tv.alertmanager.core.dto.camera_properties.CameraProperties;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+
+/**
+ * Work with Stream.
+ */
+@Service
+public class CameraPropertiesService {
+
+    @Autowired
+    private StreamCache cache;
+
+    /**
+     * Get camera extended properties
+     * @param key StreamKey
+     * @return StreamExtended
+     */
+    public CameraPropsExt get(StreamKey key) {
+        Stream stream = cache.get(key);
+        return stream.getCameraPropsExt();
+    }
+
+    /**
+     * Установить доп настройки камеры
+     */
+    public CameraPropsExt put(StreamKey key, CameraPropsExt ext) {
+
+        Stream stream = cache.get(key);
+        if(stream!= null) {
+            // replace comment
+            stream.setCameraPropsExt(ext);
+            throw new NotImplementedException("Write to Watcher");
+            //ToDo: write to Watcher
+
+
+        }
+
+    }
+
+
+
+}

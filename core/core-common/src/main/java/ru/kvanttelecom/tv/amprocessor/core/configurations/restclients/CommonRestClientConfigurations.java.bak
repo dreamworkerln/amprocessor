@@ -1,0 +1,19 @@
+package ru.kvanttelecom.tv.alertmanager.core.configurations.restclients;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.web.client.RestTemplate;
+import ru.dreamworkerln.spring.utils.common.rest.RestClient;
+import ru.dreamworkerln.spring.utils.common.rest.RestClientBuilder;
+
+@Configuration
+@Slf4j
+public class CommonRestClientConfigurations {
+
+
+
+
+
+}

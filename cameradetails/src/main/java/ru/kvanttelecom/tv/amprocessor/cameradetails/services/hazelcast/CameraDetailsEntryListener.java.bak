@@ -1,0 +1,137 @@
+package ru.kvanttelecom.tv.amprocessor.cameradetails.services.hazelcast;
+
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.map.MapEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.criterion.DetachedCriteria;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.dreamworkerln.spring.utils.common.StringUtilsEx;
+import ru.kvanttelecom.tv.amprocessor.core.db.services.CameraDetailsService;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraService;
+
+import java.util.function.Function;
+
+@Component
+@Slf4j
+public class CameraDetailsEntryListener implements EntryListener<String, Camera> {
+
+
+    //private static CameraService cameraService;
+    private static CameraDetailsService detailsService;
+
+    private static CameraServiceEx cameraServiceEx;
+
+    @Autowired
+    public void setCameraService(CameraService cameraService) {
+        CameraDetailsEntryListener.cameraServiceEx = cameraService.getCameraServiceEx();
+    }
+
+    @Autowired
+    public void setDetailsService(CameraDetailsService detailsService) {
+        CameraDetailsEntryListener.detailsService = detailsService;
+    }
+
+    // -------------------------------------------------------------
+    
+
+    protected void putHandle(EntryEvent<String, Camera> event) {
+
+        String name = event.getKey();
+        Camera camera = event.getValue();
+        CameraDetails details = camera.getDetails();
+
+        // No happens before relationship
+        String msg = StringUtilsEx.formatMsg("EVENT: {} camera: {}", event.getEventType(), name);
+        if (camera.isIntercept()) {
+            log.debug(msg+ " - INTERCEPT");
+        }
+        else {
+            log.debug(msg + " - SKIPPING");
+            return;
+        }
+
+
+        Camera oldCamera = event.getOldValue();
+        CameraDetails oldDetails = oldCamera != null ? oldCamera.getDetails() : null;
+
+
+        // Initialize CameraDetails -------------------------------------------------------------
+        // camera.details == null -> request for initialization (try to load CameraDetails from DB / create new CameraDetails)
+        //
+        if(details == null) {
+
+            // load details from DB
+            details = detailsService.get(name);
+            if (details == null) {
+                log.debug("Creating CameraDetails: {}", name);
+                details = detailsService.save(new CameraDetails(name));
+            }
+            else {
+                log.debug("Initialized from DB CameraDetails: {}", name);
+            }
+            camera.setDetails(details);
+            cameraServiceEx.saveNoIntercept(camera);
+        }
+
+        // Update details ------------------------------------------------------------------------
+        else {
+            // check if details was updated
+            if(!details.equals(oldDetails)) {
+
+                // update details in DB
+                CameraDetails tmp = detailsService.get(name);
+                // Assign id (if exists)
+                if (tmp != null) {
+                    details.setId(tmp.getId());
+                }
+
+                log.debug("Updating CameraDetails: {}", name);
+                details = detailsService.save(details);
+
+                camera.setDetails(details);
+                cameraServiceEx.saveNoIntercept(camera);
+            }
+        }
+    }
+
+
+    @Override
+    public void entryAdded(EntryEvent<String, Camera> entryEvent) {
+        putHandle(entryEvent);
+    }
+
+    @Override
+    public void entryUpdated(EntryEvent<String, Camera> entryEvent) {
+        putHandle(entryEvent);
+    }
+
+    @Override
+    public void entryRemoved(EntryEvent<String, Camera> entryEvent) {
+
+    }
+
+
+    @Override
+    public void entryEvicted(EntryEvent<String, Camera> entryEvent) {
+
+    }
+
+    @Override
+    public void entryExpired(EntryEvent<String, Camera> entryEvent) {
+
+    }
+
+    @Override
+    public void mapCleared(MapEvent mapEvent) {
+
+    }
+
+    @Override
+    public void mapEvicted(MapEvent mapEvent) {
+
+    }
+}

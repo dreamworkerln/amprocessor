@@ -1,0 +1,31 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.configurations;
+
+import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.PropertiesPropertySource;
+import ru.dreamworkerln.spring.utils.common.StringUtilsEx;
+
+import java.util.Properties;
+
+
+public class PreparedEventListener implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+
+
+    @Override
+    public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
+
+        //System.out.println("PreparedEventsListener called, context: " +  event.getBootstrapContext());
+
+        String key = "spring.boot.readylevel.required";
+        ConfigurableEnvironment env = event.getEnvironment();
+
+
+        String value = env.getProperty(key);
+        //System.out.println(env);
+        if(!StringUtilsEx.isBlank(value)) {
+
+        }
+
+    }
+}

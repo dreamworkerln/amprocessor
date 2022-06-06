@@ -1,0 +1,145 @@
+package ru.kvanttelecom.tv.alertmanager.bot.services.alert;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import ru.dreamworkerln.spring.utils.common.rest.RestClient;
+import ru.kvanttelecom.tv.alertmanager.bot.configurations.SpringBeanConfigurations;
+import ru.kvanttelecom.tv.alertmanager.bot.configurations.properties.BotProperties;
+import ru.kvanttelecom.tv.alertmanager.bot.services.telegram.Bot;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.AlertStatus;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.list.StatusAlertMap;
+
+import java.util.List;
+
+import static ru.kvanttelecom.tv.alertmanager.configz.prometheus.configurations.properties.PrometheusProperties.REST_API_GET_ALERTS_PATH;
+
+@Service
+@Slf4j
+public class AlertManager implements AlertManagerEventSink {
+
+    //private static final String FIRE = "🔥";
+
+    // ToDO implement 2 AMQP Fanout Exchangers - immediate alerts and 1 min aggregated alerts
+
+    public static boolean firstRun = true;
+
+    @Autowired
+    BotProperties props;
+
+    @Autowired
+    @Qualifier(SpringBeanConfigurations.REST_TEMPLATE_PROMETHEUS)
+    private RestClient restClient;
+
+    @Autowired
+    @Lazy
+    private Bot bot;
+
+//    @Autowired
+//    private MailSender mailer;
+
+    @Autowired
+    private AlertParser parser;
+
+    // Aggregated Alerts that received form prometheus via webhook in time interval
+    @Autowired
+    private StatusAlertMap newAlerts;
+
+    // Currently firing alerts requested via prometheus api
+    @Autowired
+    private StatusAlertMap currentAlerts;
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void sink(String json) {
+
+        // parse alerts to objects
+        List<Alert> alerts = parser.parse(json);
+
+        // aggregate alerts to StatusAlertMap
+        //newAlerts.add(alerts);
+
+        // immediately send alerts to upper webhooks
+        sendAlerts(alerts);
+    }
+
+
+    /**
+     * Immediate send alerts
+     */
+    private void sendAlerts(List<Alert> alerts) {
+
+        // below handlers shouldn't modify alerts, permitted read only
+        redminePushSender.send(alerts);
+    }
+
+    /**
+     * Get all new alerts received from prometheus via webhook for time interval. Send them to receivers.
+     *
+     */
+    @Scheduled(fixedDelay = 60 * 1000, initialDelay = 10 * 1000)
+    private void sendAggregatedAlerts() {
+
+        try {                                                         
+
+            // get new alerts (firing, pending, resolved) that prometheus already have been pushed to us
+            String alertsMail = newAlerts.getAll(MarkupTypeEnum.MAIL);
+
+            // ASAP EDC
+            // send via email
+            //mailer.send(alertsMail);
+
+
+            String alertsTelegram = newAlerts.getAll(MarkupTypeEnum.TELEGRAM);
+
+            // ASAP EDC
+            //bot.sendMessageToGroup(alertsTelegram);
+
+            // clear all messages
+            newAlerts.clear();
+
+        }
+        catch (Exception skip) {
+            log.error("Send alerts error: ", skip);
+        }
+    }
+
+    /**
+     * Get all current firing alerts from prometheus via rest api.
+     */
+    @Scheduled(fixedDelay = 60 * 1000, initialDelay = 10 * 1000)
+    private void getCurrentFiringAlerts() {
+
+        try {
+            List<Alert> alertList;
+            //log.info(props.getPrometheus().getAddress() + "/api/v1/alerts");
+            ResponseEntity<String> resp = restClient.get(props.getPrometheus().getAddress() + REST_API_GET_ALERTS_PATH);
+
+            if(resp.hasBody()) {
+                alertList = parser.parse(resp.getBody());
+                alertList.removeIf(a -> a.getStatus() != AlertStatus.FIRING);
+                currentAlerts.replace(alertList);
+            }
+        }
+        catch (Exception skip) {
+            log.error("Get current firing alerts error: ", skip);
+        }
+
+    }
+
+
+    public String getFiringAlerts() {
+        return currentAlerts.getAll(MarkupTypeEnum.TELEGRAM);
+    }
+
+    // ===========================================================================
+
+}

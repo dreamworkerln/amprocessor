@@ -1,0 +1,11 @@
+package ru.kvanttelecom.tv.amprocessor.core.services.alert;
+
+import ru.kvanttelecom.tv.amprocessor.core.data.alert.Alert;
+
+import java.util.List;
+
+public interface AlertService {
+
+    List<Alert> get();
+    void set(List<Alert> alerts);
+}

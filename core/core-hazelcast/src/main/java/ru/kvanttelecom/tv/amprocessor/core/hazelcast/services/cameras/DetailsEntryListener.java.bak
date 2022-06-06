@@ -1,0 +1,62 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera;
+
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.map.MapEvent;
+import lombok.extern.slf4j.Slf4j;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+
+import java.util.function.BiConsumer;
+
+@Slf4j
+public class DetailsEntryListener implements EntryListener<String, Camera> {
+
+    private final BiConsumer<String, EntryEvent<String, Camera>> mapHandler ;
+
+    public DetailsEntryListener(BiConsumer<String, EntryEvent<String, Camera>> mapHandler) {
+        this.mapHandler = mapHandler;
+    }
+
+    @Override
+    public void entryAdded(EntryEvent<String, Camera> event) {
+        //log.debug("entryAdded: {}", event.getKey());
+        mapHandler.accept("entryAdded", event);
+    }
+
+    @Override
+    public void entryUpdated(EntryEvent<String, Camera> event) {
+        //log.debug("entryUpdated: {}", event.getKey());
+        mapHandler.accept("entryUpdated", event);
+    }
+
+    @Override
+    public void entryRemoved(EntryEvent<String, Camera> event) {
+        //log.debug("entryRemoved: {}", event.getKey());
+        mapHandler.accept("entryRemoved", event);
+    }
+
+    @Override
+    public void entryExpired(EntryEvent<String, Camera> event) {
+        //log.debug("entryExpired: {}", event.getKey());
+        //mapHandler.accept("entryRemoved", event);
+    }
+
+    @Override
+    public void entryEvicted(EntryEvent<String, Camera> event) {
+        //log.debug("entryEvicted: {}", event.getKey());
+        //mapHandler.accept("entryRemoved", event);
+    }
+
+
+    @Override
+    public void mapEvicted(MapEvent event) {
+        //log.debug("mapEvicted: {}", event);
+        //mapHandler.mapEvicted(event);
+    }
+
+    @Override
+    public void mapCleared(MapEvent event) {
+        //log.debug("mapCleared: {}", event);
+        //mapHandler.mapCleared(event);
+    }
+}

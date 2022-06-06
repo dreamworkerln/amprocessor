@@ -1,0 +1,87 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera;
+
+import com.google.common.collect.Lists;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cache.CameraDetailsCache;
+import ru.kvanttelecom.tv.amprocessor.core.services.camera.CameraDetailsService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Component
+public class CameraDetailsCacheService implements CameraDetailsService {
+
+    // Streams(cached) on watcher
+    @Autowired
+    CameraDetailsCache detailsCache;
+
+    private boolean ready = false;
+
+    public CameraDetails get(String name) {
+        return detailsCache.get(name);
+    }
+
+    @Override
+    public CameraDetails save(CameraDetails details) {
+        detailsCache.set(details);
+        return details;
+    }
+
+    @Override
+    public List<CameraDetails> saveList(Iterable<CameraDetails> list) {
+        list.forEach(details -> detailsCache.set(details));
+        return Lists.newArrayList(list);
+    }
+
+    @Override
+    public void delete(CameraDetails CameraDetails) {
+        detailsCache.remove(CameraDetails.getName());
+    }
+
+    @Override
+    public void deleteList(Iterable<CameraDetails> list) {
+        list.forEach(details -> detailsCache.remove(details.getName()));
+    }
+
+    @Override
+    public List<CameraDetails> getList() {
+        return new ArrayList<>(detailsCache.getMap().values());
+    }
+
+    @Override
+    public Map<String, CameraDetails> getMap() {
+        return detailsCache.getMap();
+    }
+
+
+    public void merge(Map<String, CameraDetails> from) {
+        detailsCache.mirror(from);
+    }
+
+    public long count() {
+        return detailsCache.size();
+    }
+
+    @Override
+    public boolean contains(String name) {
+        return detailsCache.containsKey(name);
+    }
+
+    public boolean containsKey(String name) {
+        return detailsCache.containsKey(name);
+    }
+
+
+//    @Override
+//    public boolean isReady() {
+//        return ready;
+//    }
+//
+//    @Override
+//    public void setReady() {
+//        ready = true;
+//    }
+}

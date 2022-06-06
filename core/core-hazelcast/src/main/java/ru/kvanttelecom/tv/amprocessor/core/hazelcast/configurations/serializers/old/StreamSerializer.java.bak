@@ -1,0 +1,37 @@
+package ru.kvanttelecom.tv.alertmanager.core.hazelcast.configurations.serializers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hazelcast.nio.serialization.ByteArraySerializer;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.io.IOException;
+
+
+@Component
+@Slf4j
+public class StreamSerializer implements ByteArraySerializer<Stream> {
+
+    @Autowired
+    //@Qualifier(OBJECT_MAPPER_SMILE)
+    private ObjectMapper mapper;
+
+
+    @Override
+    public byte[] write(Stream stream) throws IOException {
+        byte[] result = mapper.writeValueAsBytes(stream);
+        return result;
+    }
+
+    @Override
+    public Stream read(byte[] buffer) throws IOException {
+        return mapper.readValue(buffer, Stream.class);
+    }
+
+    @Override
+    public int getTypeId() {
+        return 2;
+    }
+}

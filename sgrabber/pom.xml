@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+
+    <parent>
+        <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+        <artifactId>amprocessor</artifactId>
+        <version>0.1</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>sgrabber</artifactId>
+    <version>0.1</version>
+    <name>subject grabber</name>
+    <description>Watcher stream info grabber</description>
+
+
+    <dependencies>
+
+        <!--module utils -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-common -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-web -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-web</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-hazelcast -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-hazelcast</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module configz-grafana -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>configz-grafana</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module configz-grafana -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>configz-watcher</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+        <finalName>${project.artifactId}-${project.version}</finalName>
+    </build>
+
+</project>

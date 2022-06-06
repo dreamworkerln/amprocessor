@@ -1,0 +1,7 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.data;
+
+import java.util.Set;
+
+public class ModulesNames {
+    public static final Set<String> MODULES = Set.of("cameradetails");
+}

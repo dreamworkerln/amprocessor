@@ -1,0 +1,5 @@
+package ru.kvanttelecom.tv.amprocessor.telebot.services.mail.subjectlist;
+
+public class BaseAlertList implements AlertList {
+    private String name;
+}

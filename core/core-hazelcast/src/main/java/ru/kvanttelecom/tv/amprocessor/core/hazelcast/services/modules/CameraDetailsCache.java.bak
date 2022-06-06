@@ -1,0 +1,122 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cache;
+
+import com.hazelcast.core.HazelcastInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.dreamworkerln.spring.utils.common.maps.MapMirrorMerge;
+import ru.dreamworkerln.spring.utils.common.maps.wrapper.ConcurrentMapWrapper;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+
+import javax.annotation.PostConstruct;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import static ru.kvanttelecom.tv.amprocessor.core.hazelcast.configurations.cache.CacheConfig.*;
+
+
+/**
+ * Hazelcast storage for CameraDetails
+ */
+@Component
+public class CameraDetailsCache extends ConcurrentMapWrapper<String, CameraDetails> {
+
+    @Autowired
+    private HazelcastInstance instance;
+    
+    @PostConstruct
+    private void init() {
+        map = instance.getMap(CAMERAS_DETAILS);
+    }
+
+    public CameraDetails get(String name) {
+        return super.get(name);
+    }
+
+    public CameraDetails set(CameraDetails details) {
+        return put(details.getName(), details);
+    }
+
+    @Override
+    public CameraDetails put(String name, CameraDetails details) {
+        return map.put(name, details);
+    }
+
+    public CameraDetails remove(String name) {
+        return map.remove(name);
+    }
+
+    @Override
+    public void removeAll(Set<String> collection) {
+        map.keySet().removeAll(collection);
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends CameraDetails> otherMap) {
+        map.putAll(otherMap);
+    }
+
+    @Override
+    public boolean removeIf(Predicate<Entry<String,CameraDetails>> filter) {
+        return map.entrySet().removeIf(filter);
+    }
+
+    @Override
+    public int size() {
+        return map.size();
+    }
+
+    @Override
+    public ConcurrentMap<String,CameraDetails> getMap() {
+        return map;
+    }
+
+    public Stream<Entry<String,CameraDetails>> getCamera() {
+        return map.entrySet().stream();
+    }
+
+    @Override
+    public CameraDetails putIfAbsent(String name, CameraDetails value) {
+        return map.putIfAbsent(name, value);
+    }
+
+    public boolean remove(String name, CameraDetails value) {
+        return map.remove(name, value);
+    }
+
+    @Override
+    public boolean replace(String name, CameraDetails oldValue, CameraDetails newValue) {
+        return map.replace(name, oldValue, newValue);
+    }
+
+    @Override
+    public CameraDetails replace(String name,  CameraDetails value) {
+        return map.replace(name, value);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return map.containsValue(value);
+    }
+
+    @Override
+    public Set<String> keySet() {
+        return map.keySet();
+    }
+
+    public void clear() {
+        map.clear();
+    }
+
+    public void mirror(Map<String, CameraDetails> from) {
+        MapMirrorMerge.merge(from, map);
+    }
+
+}

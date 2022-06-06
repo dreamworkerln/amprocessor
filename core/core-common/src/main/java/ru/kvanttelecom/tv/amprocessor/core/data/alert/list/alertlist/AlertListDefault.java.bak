@@ -1,0 +1,57 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+
+import java.util.*;
+
+
+/**
+ * Default AlertList implementation, occurs when used no special alerts (default prometheus alert)
+ */
+@Component
+@Scope("prototype")
+public class AlertListDefault implements AlertList {
+
+    private final SimpleAlertList alerts = new SimpleAlertList();
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
+    public void add(Alert alert) {
+        alerts.add(alert);
+    }
+
+    @Override
+    public int size() {
+        return alerts.size();
+    }
+
+    @Override
+    public Collection<Alert> getAlerts() {
+        return alerts.getAlerts();
+    }
+
+    @Override
+    public Iterator<Alert> iterator() {
+        return alerts.iterator();
+    }
+
+    public String toString(MarkupTypeEnum type) {
+        StringBuilder sb = new StringBuilder();
+
+        // Clone List of alertList
+        List<Alert> list = new ArrayList<>(alerts.getAlerts());
+
+        list.sort(Comparator.comparing(alert -> alert.getSubject().getTitle(), String.CASE_INSENSITIVE_ORDER));
+        for (Alert alert : list) {
+            sb.append(alert.toString(type));
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+}

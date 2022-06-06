@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+        <artifactId>amprocessor</artifactId>
+        <version>0.1</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>core-telebot</artifactId>
+
+    <name>Core Telegram Bot</name>
+    <description>
+        Telegram Bot Base class
+    </description>
+
+    <dependencies>
+
+
+        <!-- https://mvnrepository.com/artifact/com.github.pengrad/java-telegram-bot-api -->
+        <dependency>
+            <groupId>com.github.pengrad</groupId>
+            <artifactId>java-telegram-bot-api</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+
+
+        
+        <!-- module utils -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--module core-common -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+    </dependencies>
+
+
+
+</project>

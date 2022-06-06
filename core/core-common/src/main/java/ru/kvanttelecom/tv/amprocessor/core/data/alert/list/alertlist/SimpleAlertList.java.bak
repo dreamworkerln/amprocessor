@@ -1,0 +1,34 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list.alertlist;
+
+import lombok.Getter;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Just List{@literal <}Alert{@literal >}
+ */
+public class SimpleAlertList implements Iterable<Alert> {
+
+    private final List<Alert> alerts = new ArrayList<>();
+
+    public void add(Alert alert) {
+        alerts.add(alert);
+    }
+
+    public int size() {
+        return alerts.size();
+    }
+
+    public Collection<Alert> getAlerts() {
+        return alerts;
+    }
+
+    @Nonnull
+    @Override
+    public Iterator<Alert> iterator() {
+        return alerts.iterator();
+    }
+}

@@ -1,0 +1,38 @@
+package ru.kvanttelecom.tv.amprocessor.core.services.camera;
+
+import ru.dreamworkerln.spring.utils.common.dto.AbstractDto;
+
+import java.util.List;
+import java.util.Map;
+
+public interface SomethingService<T extends AbstractDto> {
+
+    T get(String name);
+
+    T save(T cam);
+
+    List<T> saveList(Iterable<T> list);
+
+    void delete(T cam);
+
+    void deleteList(Iterable<T> camList);
+
+    List<T> getList();
+
+    Map<String,T> getMap();
+
+    long count();
+
+    boolean contains(String name);
+
+    /**
+     * Mirror merge from to self
+     * @param from
+     */
+    void merge(Map<String, T> from);
+
+//
+//    public boolean isReady();
+//
+//    public void setReady();
+}

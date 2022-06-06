@@ -1,0 +1,23 @@
+package ru.kvanttelecom.tv.amprocessor.sgrabber.services.initializers;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraGroup;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras.CameraService;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Component
+@Slf4j
+public class InternalCameraInitializer {
+
+    @Autowired
+    CameraService cameraService;
+
+
+}

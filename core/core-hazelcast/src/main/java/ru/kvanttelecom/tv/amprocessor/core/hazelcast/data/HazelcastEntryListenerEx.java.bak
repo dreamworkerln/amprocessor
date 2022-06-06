@@ -1,0 +1,16 @@
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.data;
+
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.map.MapEvent;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+
+public interface HazelcastEntryListenerEx<K,V> {
+
+    void entryAdded(EntryEvent<K, V> event);
+    void entryUpdated(EntryEvent<K, V> event);
+    void entryRemoved(EntryEvent<K, V> event);
+    void entryExpired(EntryEvent<K, V> event);
+    void entryEvicted(EntryEvent<K, V> event);
+    void mapEvicted(MapEvent event);
+    void mapCleared(MapEvent event);
+}

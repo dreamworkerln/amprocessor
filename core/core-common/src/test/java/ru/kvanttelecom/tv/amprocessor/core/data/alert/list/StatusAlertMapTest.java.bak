@@ -1,0 +1,114 @@
+package ru.kvanttelecom.tv.alertmanager.core.data.alert.list;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.StreamKey;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.Alert;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.AlertStatus;
+import ru.kvanttelecom.tv.alertmanager.core.data.alert.MarkupTypeEnum;
+import ru.kvanttelecom.tv.alertmanager.core.data.subject.Subject;
+import ru.kvanttelecom.tv.alertmanager.core.dto.stream.Stream;
+
+import java.time.*;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+@SpringBootTest
+@Slf4j
+class StatusAlertMapTest {
+
+    public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
+
+        Map<Object, Boolean> seen = new ConcurrentHashMap<>();
+
+        return t -> {
+            log.info("t: {}", t);
+            return seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+        };
+
+//        return t -> {
+//            log.info("t: {}", t);
+//            return seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+//        };
+
+
+    }
+
+    @Autowired
+    private StatusAlertMap statusAlertMap;
+
+    public MarkupTypeEnum zopa = MarkupTypeEnum.MAIL;
+
+
+    @SneakyThrows
+    @Test
+    void add() {
+
+        List<Person> personList = List.of(
+            new Person(5,"Name01", "email01@mail.ru"),
+            new Person(10,"Name02", "email02@mail.ru"));
+
+
+
+        List<Person> personListFiltered = personList.stream()
+            .filter(distinctByKey(Person::getName))
+            .collect(Collectors.toList());
+
+
+        //TimeZone.setDefault(TimeZone.getTimeZone("Portugal"));
+        //TimeZone.setDefault(TimeZone.getTimeZone("Europe/Moscow"));
+
+        LocalDate localDate = LocalDate.parse("2016-04-17");
+        LocalDateTime localDateTime = localDate.atTime(12, 34, 55);
+
+        Subject subject = new Stream(
+            new StreamKey("t1.kuku.ru", "Abibas"),
+            "t1.kuku.ru",
+            "t1",
+            Map.of("key1", "http://t1.kuku.ru?stream=Abibas", "key2", "http://grafana.ru?bla-bla=3"),
+            "Abibas",
+            "title: Abibas bla-bla-bla",
+            "comment: blablabla",
+            null,
+            null,
+            null,
+            "zopaorg",
+            null,
+            null);
+
+        Alert alert = new Alert();
+        alert.setName("StreamDown");
+        alert.setDescription("Test Alert Description");
+        alert.setSubject(subject);
+        alert.setStartsAt(localDateTime.toInstant(ZoneOffset.UTC));
+        alert.setEndsAt(alert.getStartsAt().plusSeconds(3 * 24 * 3600));
+        alert.setDuration(Duration.between(alert.getStartsAt(), alert.getEndsAt()));
+        alert.setStatus(AlertStatus.FIRING);
+
+        statusAlertMap.add(List.of(alert, alert));
+        
+        log.info("Msg:\n{}", statusAlertMap.getAll(MarkupTypeEnum.MAIL));
+
+        log.info("Msg:\n{}", statusAlertMap.getAll(MarkupTypeEnum.TELEGRAM));
+
+        
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class Person {
+        private int age;
+        private String name;
+        private String email;
+        // standard getters and setters
+    }
+}

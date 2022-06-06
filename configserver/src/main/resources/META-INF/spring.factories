@@ -1,0 +1,1 @@
+org.springframework.context.ApplicationListener=ru.kvanttelecom.tv.amprocessor.configserver.configurations.PreparedEventListener,ru.kvanttelecom.tv.amprocessor.configserver.configurations.ApplicationAllEventsListener

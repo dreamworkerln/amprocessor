@@ -1,0 +1,90 @@
+package ru.kvanttelecom.tv.amprocessor.sgrabber.services.db;
+
+import com.hazelcast.map.MapInterceptor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
+import ru.kvanttelecom.tv.amprocessor.core.db.services.CameraDetailsService;
+import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
+import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.camera.CameraService;
+
+@Slf4j
+public class CameraDetailsMapInterceptor implements MapInterceptor {
+
+    private final CameraDetailsService detailsService;
+    private final CameraService cameraService;
+
+    public CameraDetailsMapInterceptor(CameraService cameraService, CameraDetailsService detailsService) {
+        this.cameraService = cameraService;
+        this.detailsService = detailsService;
+    }
+
+    @Override
+    public Object interceptPut(Object oldValue, Object newValue) {
+
+        Camera camera = (Camera)newValue;
+        Camera oldCamera = (Camera)oldValue;
+        String name = camera.getName();
+
+        CameraDetails details = camera.getDetails();
+
+        // Initialize CameraDetails -------------------------------------------------------------
+        // (try to load CameraDetails from DB / create new CameraDetails)
+        if(details == null) {
+
+            // load details from DB
+            details = detailsService.get(name);
+            if (details == null) {
+                log.debug("Creating CameraDetails: {}", name);
+
+                //details = new CameraDetails(name);
+                details = detailsService.save(new CameraDetails(name));
+            }
+            else {
+                log.debug("Initialized from DB CameraDetails: {}", name);
+            }
+
+            camera.setDetails(details);
+        }
+
+        // Update details ------------------------------------------------------------------------
+        else {
+            CameraDetails oldDetails = oldCamera!=null ? oldCamera.getDetails() : null;
+
+            // check if details was updated
+            if(!details.equals(oldDetails)) {
+                // update details in DB
+                log.debug("Updating CameraDetails: {}", name);
+                details = detailsService.save(details);
+                camera.setDetails(details);
+            }
+        }
+        return camera;
+    }
+
+
+    @Override
+    public Object interceptGet(Object value) {
+        return null;
+    }
+
+    @Override
+    public void afterGet(Object value) {
+    }
+    
+
+
+
+    @Override
+    public void afterPut(Object o) {
+    }
+
+    @Override
+    public Object interceptRemove(Object o) {
+        return null;
+    }
+
+    @Override
+    public void afterRemove(Object o) {
+    }
+}
