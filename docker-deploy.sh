@@ -6,7 +6,7 @@ source docker_config.sh
 
 # Only prepare config for local docker run, then exit script
 # (don't docker push to registry, don't deploy to server)
-MAKE_CONFIG_ONLY=true
+MAKE_CONFIG_ONLY=false
 
 # Only push docker images to registry
 # (don't deploy to server)
@@ -14,10 +14,11 @@ PUSH_TO_REGISTRY_ONLY=false
 
 # spring profile may be empty -> will be used default profile
 #export PROFILE=dev
-export PROFILE=dev
+#(dev/prod)
+export PROFILE=prod
 
 # enable json logging for elasticsearch
-export ENABLE_LOG2JSON=false
+export ENABLE_LOG2JSON=true
 
 # Using ansible host group
 export HOST=amprocessor_host
@@ -58,11 +59,17 @@ if [ "${MAKE_CONFIG_ONLY}" = true ]; then
 fi
 
 
+# pushing all modules
 for name in "${modules[@]}"
 do
   echo -e "\n${YELLOW}Pushing image: $name:$TAG${NC}"
   docker push dreamworkerln/amprocessor-"${name}":"$TAG"
 done
+
+# pushing additional images (non java)
+name="database"
+echo -e "\n${YELLOW}Pushing image: $name:$TAG${NC}"
+docker push dreamworkerln/amprocessor-"${name}":"$TAG"
 
 
 

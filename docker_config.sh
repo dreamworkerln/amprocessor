@@ -2,7 +2,7 @@
 
 # Docker TAG
 #export TAG=latest
-export TAG=0.4
+export TAG=0.41
 
 # modules
 declare -a modules=("configserver" "sgrabber" "flexporter" "alerthandler" "telebot" "mailer" "cameradetails")
