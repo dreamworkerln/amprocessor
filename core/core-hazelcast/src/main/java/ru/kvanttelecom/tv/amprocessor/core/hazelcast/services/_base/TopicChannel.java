@@ -46,7 +46,7 @@ public class TopicChannel<T> {
 
     /**
      * Send message
-     * @param id message id
+     * @param id message id, -1 for multicast (send to all subscribers)
      * @param body body
      */
     public void sendMessage(int id, T body) {

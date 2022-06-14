@@ -15,7 +15,8 @@ public class SemaphoreResponsePair<RSP> {
      */
     @Getter
     private boolean responded = false;
-    // Semaphore(0) mean that requesting thread always will wait response
+
+    // Semaphore(permits==0) mean that requesting thread always will wait response
     private final Semaphore semaphore = new Semaphore(0);
 
     /**

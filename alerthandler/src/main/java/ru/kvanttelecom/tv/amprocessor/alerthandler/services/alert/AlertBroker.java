@@ -3,9 +3,9 @@ package ru.kvanttelecom.tv.amprocessor.alerthandler.services.alert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.kvanttelecom.tv.amprocessor.alerthandler.services.amqp.AmqpService;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.Alert;
-import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.AlertService;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.broker.AlertMessageBusService;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.firing.FiringAlertService;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.modules.ModulesService;
 
 import java.util.List;
@@ -15,19 +15,19 @@ import java.util.List;
 public class AlertBroker {
 
     @Autowired
-    private AlertService alertService;
-
-    @Autowired
-    private AmqpService amqpService;
+    private FiringAlertService firingAlertService;
 
     @Autowired
     private AlertParser parser;
 
     @Autowired
-    AlertFiringDownloader alertFiringDownloader;
+    private AlertFiringDownloader alertFiringDownloader;
 
     @Autowired
-    ModulesService modulesService;
+    private ModulesService modulesService;
+
+    @Autowired
+    private AlertMessageBusService alertMessageBusService;
 
     /**
      * Consume alertmanager push notifications
@@ -44,9 +44,8 @@ public class AlertBroker {
         // aggregate alerts to StatusAlertMap
         // newAlerts.add(alerts);
 
-        // immediately send alerts to AMQP fanout exchanger
-        amqpService.sendAlerts(newAlerts);
-
+        // immediately send alerts to subscribers
+        alertMessageBusService.publish(newAlerts);
     }
 
 //    public List<Alert> getAlertsFiring() {
@@ -64,7 +63,7 @@ public class AlertBroker {
         List<Alert> currentFiringAlerts =  alertFiringDownloader.getFiring();
 
         // save all firing alerts to hazelcast
-        alertService.clearAndSet(currentFiringAlerts);
+        firingAlertService.clearAndSet(currentFiringAlerts);
 
         // MODULE IS READY: ALERTHANDLER  ===============
         modulesService.ready();

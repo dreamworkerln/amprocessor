@@ -7,11 +7,9 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.Message;
 import com.hazelcast.transaction.TransactionContext;
 import com.hazelcast.transaction.TransactionOptions;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.data.SemaphoreResponsePair;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages.BaseMessage;
 import ru.kvanttelecom.tv.amprocessor.utils.Delegate;
@@ -38,6 +36,8 @@ public abstract class BaseCacheService<K, V, REQ, RSP> {
 
     //private final static LongUnaryOperator longCycleIncrementator = (i) -> i == Long.MAX_VALUE ? 0 : i + 1;
     private final static IntUnaryOperator intCycleIncrementator = (i) -> i == Integer.MAX_VALUE ? 0 : i + 1;
+
+    // messages with id = -1 are multicast messages
     private final AtomicInteger idGen = new AtomicInteger(1);
 
     protected String mapName;
@@ -84,7 +84,7 @@ public abstract class BaseCacheService<K, V, REQ, RSP> {
         responseTopic = new TopicChannel<>(instance.getReliableTopic(responseTopicName));
 
         // add default response listener for synchronous requests ---------------------
-        defaultResponseListenerRegistration = responseTopic.addMessageHandler(this::defaultResponseListener);
+        defaultResponseListenerRegistration = responseTopic.addMessageHandler(this::syncResponseListener);
 
         // apply hazelcast Member removed delegate  -----------------------------------
         instance.getCluster().addMembershipListener(new MemberUpDownListener());
@@ -140,10 +140,19 @@ public abstract class BaseCacheService<K, V, REQ, RSP> {
     // Subscriptions -----------------------------------------------------
 
 
+    /**
+     * Add request handler (on server side)
+     * @param handler
+     * @return registration id
+     */
     public int addRequestHandler(Consumer<Message<BaseMessage<REQ>>> handler) {
         return requestTopic.addMessageHandler(handler);
     }
 
+    /**
+     * Remove request handler
+     * @param regId handler registration id
+     */
     public synchronized void removeRequestHandler(int regId) {
         requestTopic.removeMessageHandler(regId);
     }
@@ -244,6 +253,7 @@ public abstract class BaseCacheService<K, V, REQ, RSP> {
 
     /**
      * Emulation receiving message
+     * Required for local (simulated) message processing (receiving)
      * @param message hazelcast Message
      */
     public void emulateRequestReceive(Message<BaseMessage<REQ>> message) {
@@ -254,9 +264,11 @@ public abstract class BaseCacheService<K, V, REQ, RSP> {
     // =========================================================================
 
 
-
-
-    private void defaultResponseListener(Message<BaseMessage<RSP>> message) {
+    /**
+     * Default synchronous response listener
+     * Resume execution of thread that made request (called sendRequestSync(...) )
+     */
+    private void syncResponseListener(Message<BaseMessage<RSP>> message) {
         BaseMessage<RSP> response = message.getMessageObject();
 
         int id = response.id;

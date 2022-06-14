@@ -11,13 +11,6 @@ services:
         source: postgres-data
         target: /var/lib/postgresql/data
 
-  rabbitmq:
-    image: "rabbitmq:3-management"
-    hostname: 'rabbitmq'
-    volumes:
-      - "rabbit-data:/var/lib/rabbitmq/"
-    restart: always
-
   configserver:
     image: "dreamworkerln/amprocessor-configserver:${TAG}"
     environment:

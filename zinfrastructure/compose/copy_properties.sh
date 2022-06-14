@@ -43,7 +43,7 @@ envsubst < docker-compose.yml > $TARGET/docker-compose.yml
 
 # cp Start.sh, Stop.sh
 cp start.sh $TARGET/start.sh
-cp start_interactive.sh $TARGET/start_interactive.sh
+cp start-interactive.sh $TARGET/start-interactive.sh
 cp stop.sh $TARGET/stop.sh
 cp config $TARGET/config
 

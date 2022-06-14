@@ -23,7 +23,6 @@
         <module>core/core-common</module>
         <module>core/core-telebot</module>
         <module>core/core-hazelcast</module>
-        <module>core/core-amqp</module>
         <module>core/core-db</module>
         <module>core/core-web</module>
 

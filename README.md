@@ -55,13 +55,13 @@ Also this prevent from leaking sensitive data (as login info) to public git repo
 mvn -DargLine="-Dspring.profiles.active=test" clean test
 ```
 
-## Step 6 should be reconsidered, drop it away for now
+### 6. Configure local host systemd postgres for run/debug
 
-### 6. Configure local host systemd postgres and rabbitmq for run/debug
+**This is fully optional step, you may omit it, DO NOT USE ON PRODUCTION !!!**
 
-**This is fully optional step, you may omit it**
-
-It's a problem to connect from docker container to host-localhost listening only services.
+It's a problem to connect from docker container to host listening only services.
+<br>
+(without using host-only net, modifying docker-compose.yml / using host.docker.internal)
 
 So host services should be reconfigured to listen on external IP or 
 docker subnet IP.
@@ -119,54 +119,7 @@ host    all             all             192.168.1.100/32        md5
 ```
 sudo systemctl restart postgres
 ```
-> Why accept connection from 192.168.1.100/32,
-> docker 10.20.0.0/16 will be enough ?
-
 <br>  
-
-#### 6.2 Configure rabbitmq
-
-#### Only on development host, do not do it on production!
-
-
-Detect which config file is used for rabbitmq on your system
-(depends of rabbitmq version)
-```
-/etc/rabbitmq/rabbitmq.conf 
-or
-/etc/rabbitmq/rabbitmq.config
-```
-
-
-```
-/etc/rabbitmq/rabbitmq.conf
-
-# DANGER ZONE!
-#
-# allowing remote connections for default user is highly discouraged
-# as it dramatically decreases the security of the system. Delete the user
-# instead and create a new one with generated secure credentials.
-loopback_users = none
-```
-
-```
-/etc/rabbitmq/rabbitmq.config 
-%% this is a comment
-[
-  {rabbit, [
-      {loopback_users, [none]}
-    ]
-  }
-]. 
-```
-
-
-```
-sudo systemctl restart rabbitmq-server.service
-```
-> rabbitmq could be configured to accept connection from different interfaces<br>
-> Use again docker 10.20.0.0/16
-<br>
 
 #### 6.2 Configure host /etc/hosts
 
@@ -177,19 +130,15 @@ Add it to hosts file:
 /etc/hosts
 # docker containers forwading
 192.168.1.100       database
-192.168.1.100       rabbitmq
 192.168.1.100       configserver
 ```
 (192.168.1.100 - your host external IP) 
-
-> Why not use 10.20.0.1 instead of 192.168.1.100
-<br>
 <br>
 
 #### 6.3 Finish configuring
 This configuration allows you to run on development host  
 services from Intellij Idea, from docker containers,
-and use postgres/rabbitmq from local systemd services or from docker containers. 
+and use postgres from local systemd services or from docker containers. 
 
 
 #### 7. Configure Alertmanager
@@ -241,6 +190,8 @@ change PASSWORD on your own
 #### 8. Configure nginx reverse proxy authorization for Prometheus and Alertmanager (optional)
 
 Create .htpasswd
+<br>
+https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/
 ```
 sudo htpasswd -c /etc/nginx/.htpasswd USERNAME
 ```
@@ -296,54 +247,4 @@ nginx -t
 reload service
 ```
 systemctl reload nginx.service 
-```
-
-
-
-
-
-
-
-###################### DEPRECATED - CLEAN UP THIS ###############################
-    
-
-
-
-
-
-##### Optionally.
-##### Edit sgrabber configurations.
-Sgrabber can use custom data for alert details, provided from third-party services
-(For information that not present in prometheus, if you don't want use "label_replace(...)" and dynamically reload prometheus configurations)
-instead of default alert annotation (that has been configured in prometheus/rules.yml).<br>
-For example sgrabber service use camera stream name as key and put it into hazelcast Map<name,subject>
-```
-class Subject
-    String key;
-    String title;
-    String description;
-   
-``` 
-
-Sgrabber periodically collecting Cameras as Subjects from Watcher streaming service.<br>
-(Cameras may be dynamically added/removed.)<br>
-Prometheus also store metrics about cameras through custom exporter with same stream label.
-When bot receive camera alert push with stream name it tries to find in hazelcast entry with that stream name as key and use
-Subject fields instead default alert annotation. So user get alert like:
-``` 
-Camera <address> down
-```
-instead of
-``` 
-Camera 4512127d-7ed7-49ee-8e3b-1c3d0340e963 down
-```
-
-```
-cd sgrabber/src/main/resources/
-application.properties
-sgrabber.properties
-```
-watcher.token got from 
-```
-https://flussonic.github.io/watcher-docs/api-examples.html#login
 ```

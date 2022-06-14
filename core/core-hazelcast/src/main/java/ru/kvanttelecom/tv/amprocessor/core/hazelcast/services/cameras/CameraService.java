@@ -9,6 +9,9 @@ import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras.configurat
 
 import java.util.*;
 
+/**
+ * Provide information about cameras from hazelcast map
+ */
 @Component
 @Slf4j
 public class CameraService extends BaseCacheService<String, Camera, Set<Camera>, Void> {

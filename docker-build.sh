@@ -6,11 +6,21 @@ source docker_config.sh
 
 # проверяем, установлен ли maven, если да, то собираем проект
 
-echo -e "${YELLOW}Java compiling...${NC}"
+echo -e "\n${YELLOW}Java compiling...${NC}"
 if command -v mvn &> /dev/null
 then
   mvn -DskipTests clean package
+  MVN_RESULT=$?
 fi
+# else ERROR - no maven found or substitute here generated maven script from Spring Boot initializer
+
+if [ $MVN_RESULT -ne 0 ];
+then
+  echo -e "\n${RED}MAVEN COMPILATION FAILED. HALT.${NC}"
+  exit 1
+fi
+
+
 
 
 #echo -e "${YELLOW}Building docker images with tag: $TAG${RED}"
@@ -26,7 +36,7 @@ do
   fi
 
   # extract jar content to /target/extracted folder
-  mkdir "$name"/target/extracted
+  mkdir -p "$name"/target/extracted
   java -Djarmode=layertools -jar "$name"/target/*.jar extract --destination "$name"/target/extracted
 
   echo -e "\n${YELLOW}Building image: $name:$TAG${NC}"

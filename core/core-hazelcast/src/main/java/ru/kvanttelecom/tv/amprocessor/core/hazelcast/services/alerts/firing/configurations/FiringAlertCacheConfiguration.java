@@ -1,4 +1,4 @@
-package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.configurations;
+package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.firing.configurations;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +9,13 @@ import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.CacheConfigu
 @HazelcastConfiguration
 @Component
 @Slf4j
-public class AlertsCacheConfiguration extends CacheConfiguration {
+public class FiringAlertCacheConfiguration extends CacheConfiguration {
 
 
     @Override
     protected void setNames() {
-        mapName           = "MAP_ALERTS";
-        requestTopicName  = "TOPIC_ALERTS_STATE_CHANGED_REQUEST";
-        responseTopicName = "TOPIC_ALERTS_STATE_CHANGED_RESPONSE";
+        mapName           = "MAP_FIRINGALERTS";
+        requestTopicName  = "TOPIC_FIRINGALERTS_STATE_CHANGED_REQUEST";
+        responseTopicName = "TOPIC_FIRINGALERTS_STATE_CHANGED_RESPONSE";
     }
 }

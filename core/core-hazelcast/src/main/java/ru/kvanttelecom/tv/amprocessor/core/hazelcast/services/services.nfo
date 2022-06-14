@@ -1,0 +1,1 @@
+Basic hazelcast service, contains Map and 2 TopicChannels, one for request and one for response

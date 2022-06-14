@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.Alert;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.AlertsFormatter;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.MarkupTypeEnum;
-import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.AlertService;
+import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.firing.FiringAlertService;
 import ru.kvanttelecom.tv.amprocessor.core.telebot.service.BaseBot;
 
 import javax.annotation.PostConstruct;
@@ -23,7 +23,7 @@ import static ru.dreamworkerln.spring.utils.common.StringUtilsEx.isBlank;
 public class Telebot extends BaseBot {
 
     @Autowired
-    private AlertService alertService;
+    private FiringAlertService firingAlertService;
 
     @PostConstruct
     private void init() {
@@ -67,7 +67,7 @@ public class Telebot extends BaseBot {
     private void alerts(Long chatId, String unused) {
         String text = "";
 
-        List<Alert> currentFiring = alertService.get();
+        List<Alert> currentFiring = firingAlertService.get();
         text = AlertsFormatter.toString(currentFiring, MarkupTypeEnum.TELEGRAM);
 
         if(isBlank(text)) {

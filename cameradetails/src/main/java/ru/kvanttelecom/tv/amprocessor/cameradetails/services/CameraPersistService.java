@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.kvanttelecom.tv.amprocessor.core.db.services.CameraDetailsService;
 import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
@@ -26,11 +25,11 @@ import java.util.Set;
  * Persist camera.details to DB
  *
  * Listening Hazelcast.Topic TOPIC_CAMERAS_FLUSH messages,
- * Message containing cameras names to flush
+ * This message containing cameras (names) to flush to DB
  */
 @Service
 @Slf4j
-public class CameraFlushService extends CameraService {
+public class CameraPersistService extends CameraService {
 
     @Autowired
     private CameraDetailsService detailsService;
@@ -53,10 +52,10 @@ public class CameraFlushService extends CameraService {
 
     @PostConstruct
     private void init() {
-        addRequestHandler(this::flush);
+        addRequestHandler(this::persist);
 
         // do not listen responses from itself
-        removeResponseHandler(defaultResponseListenerRegistration);
+        // removeResponseHandler(defaultResponseListenerRegistration);
 
             /*
             oldDetails  details
@@ -78,10 +77,10 @@ public class CameraFlushService extends CameraService {
      * Create/update CameraDetails
      * <br>
      * Agreement:
-     *   Camera.details == null => upload from DB == null => create new CameraDetails()
+     *   Camera.details == null => upload camera from DB, if == null => create new CameraDetails()
      * @param message camera names to persist
      */
-    public void flush(Message<BaseMessage<Set<Camera>>> message)  {
+    public void persist(Message<BaseMessage<Set<Camera>>> message)  {
 
         // Create database transaction
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);

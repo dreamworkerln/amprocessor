@@ -83,12 +83,23 @@ public class ModulesService extends BaseCacheService<String, ModuleState, Messag
 
     /**
      * Set current module state to UP
-     * <br>Do nothing if module already up
+     * <br>Do nothing if module already UP
      */
     public void ready() {
         if(get(moduleName) != ModuleState.UP) {
             changeState(ModuleState.UP);
         }
+    }
+
+
+    /**
+     * Change current module state
+     * @param state state
+     */
+    private void changeState(ModuleState state) {
+        //log.debug("Current module [{}] now: {}", moduleName, state);
+        put(moduleName, state);
+        sendRequest(nextId(), new MessageStateChanged(moduleName, state));
     }
 
 
@@ -163,20 +174,6 @@ public class ModulesService extends BaseCacheService<String, ModuleState, Messag
             memberModuleMap.setTtl(sender, 1, TimeUnit.MINUTES);
         }
     }
-
-
-
-    /**
-     * Change current module state
-     * @param state state
-     */
-    private void changeState(ModuleState state) {
-        //log.debug("Current module [{}] now: {}", moduleName, state);
-        put(moduleName, state);
-        sendRequest(nextId(), new MessageStateChanged(moduleName, state));
-    }
-
-
 
     // not used
     private void logModuleStateChangeCaller(ModuleState state) {

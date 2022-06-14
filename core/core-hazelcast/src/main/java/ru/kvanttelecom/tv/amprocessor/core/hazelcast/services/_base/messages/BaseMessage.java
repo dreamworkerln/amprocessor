@@ -3,6 +3,11 @@ package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages;
 import java.io.Serializable;
 
 ///@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.PROPERTY, property = "@type")
+
+/**
+ * Container for messages
+ * @param <T>
+ */
 public class BaseMessage<T> implements Serializable {
 
     public final Integer id;
