@@ -2,7 +2,10 @@
 
 # Docker TAG
 #export TAG=latest
-export TAG=0.41
+export TAG=0.42
+
+# java config
+JAVA_OPTS_HEAP="-Xmx128m -Xms128m"
 
 # modules
 declare -a modules=("configserver" "sgrabber" "flexporter" "alerthandler" "telebot" "mailer" "cameradetails")
@@ -17,6 +20,8 @@ if [ -z "$TAG" ]
 then
   TAG=latest
 fi
+
+
 
 
 

@@ -64,8 +64,8 @@ public abstract class BaseBot {
     //private final AtomicLong idGen =  new AtomicLong();
     //private final ConcurrentMap<Long, SendMessage> messageQueue = new ConcurrentHashMap<>();
 
-    private final BlockingJobPool<SendMessage,SendResponse> jobPool =
-        new BlockingJobPool<>(1, TELEGRAM_SEND_TIMEOUT_MIN, null, "telegramPool");
+    private final BlockingJobPool<SendMessage,SendResponse> jobPool = BlockingJobPool.Builder
+        .build(1, TELEGRAM_SEND_TIMEOUT_MIN, null, "telegramPool");
 
     //private Map<Long, AtomicLong> locks = new ConcurrentHashMap<>();
 

@@ -143,10 +143,11 @@ services:
       log: eslog
 
   filebeat:
-    image: "docker.elastic.co/beats/filebeat:7.9.3"
+#   image: "docker.elastic.co/beats/filebeat:7.9.3"
+    image: "elastic/filebeat:8.3.3"
     restart: always
-    depends_on:
-      - elasticsearch
+#    depends_on:
+#      - elasticsearch
     command: "-environment container -strict.perms=false"
     user: root
     volumes:
@@ -157,4 +158,4 @@ services:
 volumes:
   postgres-data:
     external: false
-  rabbit-data:
+#  rabbit-data:

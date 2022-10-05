@@ -129,7 +129,7 @@ done
 
 # copy filebeat config
 mkdir -p $TARGET/filebeat
-cp "$CONFIG_REPO"/filebeat/filebeat.yml $TARGET/filebeat/
+cp "$CONFIG_REPO"/filebeat/"${PROFILE}"/filebeat.yml $TARGET/filebeat/
 
 
 #

@@ -33,8 +33,8 @@ public class MailSender {
     private static final Duration MAIL_SEND_TIMEOUT_MAX = Duration.ofSeconds(1024);
     private final AtomicReference<Duration> mailSendTimeout = new AtomicReference<>(MAIL_SEND_TIMEOUT_MIN);
 
-    private final BlockingJobPool<SimpleMailMessage, Void> jobPool =
-        new BlockingJobPool<>(1, MAIL_SEND_TIMEOUT_MIN, null, "mailPool");
+    private final BlockingJobPool<SimpleMailMessage, Void> jobPool = BlockingJobPool.Builder
+        .build(1, MAIL_SEND_TIMEOUT_MIN, null, "mailPool");
 
     @Autowired
     private JavaMailSender javaMailSender;

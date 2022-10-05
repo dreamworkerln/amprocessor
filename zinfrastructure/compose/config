@@ -9,5 +9,3 @@
 #PGDATA=/var/lib/postgresql/data
 #POSTGRES_PASSWORD=gjhUY876787ytuh87gdf
 #PROJECT_NAME="ltmdockercompose"
-
-JAVA_OPTS_HEAP="-Xmx128m -Xms128m"

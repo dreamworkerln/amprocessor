@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.util.Assert;
 import ru.kvanttelecom.tv.amprocessor.core.db.entities.CameraDetailsEntity;
 
 import java.util.Optional;
@@ -35,7 +36,9 @@ class CameraDetailsServiceTest {
              "там-там-там взять ключи-ключи-ключи",
             "vlan 2");
 
-        detailsService.save(cp);
+        CameraDetailsEntity cpSaved = detailsService.save(cp);
+
+        Assert.notNull(cpSaved, "Saved CameraDetailsEntity is null");
     }
 
 
