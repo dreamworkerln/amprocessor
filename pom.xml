@@ -23,6 +23,7 @@
         <module>core/core-common</module>
         <module>core/core-telebot</module>
         <module>core/core-hazelcast</module>
+        <module>core/core-prometheus</module>
         <module>core/core-db</module>
         <module>core/core-web</module>
 
@@ -128,7 +129,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.7.0</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -136,7 +137,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.7.0</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -145,7 +146,7 @@
         <dependency>
             <groupId>net.tascalate</groupId>
             <artifactId>net.tascalate.concurrent</artifactId>
-            <version>0.9.4</version>
+            <version>0.9.6</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.pivovarit/throwing-function -->
@@ -316,7 +317,7 @@
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
-                        <compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>
+<!--                        <compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>-->
                         <compilerArg>-parameters</compilerArg>
                     </compilerArgs>
                 </configuration>

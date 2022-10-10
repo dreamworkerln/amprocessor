@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationAllEventsListener implements ApplicationListener<ApplicationEvent> {
 
     private boolean slept = false;
-    @SneakyThrows
     @Override
     public void onApplicationEvent(ApplicationEvent event) {
         //System.out.println("Application event: " + event);

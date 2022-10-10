@@ -12,9 +12,7 @@ import ru.kvanttelecom.tv.amprocessor.flexporter.data.CameraState;
 import javax.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus.prometheus_series.flussonic.metrics;
-import static ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus.prometheus_series.flussonic.tags;
+import static ru.kvanttelecom.tv.amprocessor.core.prometheus.data.schema.prometheus_series.flussonic.*;
 
 /**
  * Service to work with Micrometer meters
@@ -29,7 +27,7 @@ public class MeterService {
     @Autowired
     MeterRegistry registry;
 
-    private Map<String, Counter> counterMap = new ConcurrentHashMap<>();
+    private final Map<String, Counter> counterMap = new ConcurrentHashMap<>();
 
     // ручное черезжопное внедрение зависимости, обход цикла зависимостей
     @PostConstruct
@@ -56,7 +54,7 @@ public class MeterService {
                 CameraState state = stateService.get(s);
                 return state.isAlive() ? 1 : 0;
             })
-            .tags(tags.stream, name, tags.title, camera.getTitle())
+            .tags(tags.host, camera.getHostname(), tags.stream, name, tags.title, camera.getTitle())
             .description(metrics.stream.alive.description)
             .register(registry);
 
@@ -73,7 +71,7 @@ public class MeterService {
         // camera.flapping.downcount counter
         Counter counter =
         Counter.builder(metrics.stream.flapping.down.name)
-            .tags(tags.stream, name, tags.title, camera.getTitle())
+            .tags(tags.host, camera.getHostname(), tags.stream, name, tags.title, camera.getTitle())
             .description(metrics.stream.flapping.down.description)
             .register(registry);
         counterMap.put(camera.getName(), counter);

@@ -23,15 +23,31 @@ public class CameraService extends BaseCacheService<String, Camera, Set<Camera>,
 
 
      /**
-     * Get camera by hostname and camera name
+     * Get camera by hostname and stream(camera) name
+     * <br> Use this method to get cameras from Flussonic Media server.
      * @param hostname hostname
      * @param name camera name
-     * @return Camera
+     * @return Camera or null
      */
     public Camera get(String hostname, String name) {
-        Camera tmp = get(name);
+        Camera tmp = super.get(name);
         return tmp != null && tmp.getHostname().equals(hostname) ? tmp : null;
     }
+
+
+//    /**
+//     * Get camera by camera name
+//     * <br>
+//     * Should use only for cameras from trusted sources (not from flussonic streamers!)
+//     * <br>Flussonic Streamer may contain camera with same name, but unknown to Watcher (for example - old moved camera)
+//     * @param name camera name
+//     * @return Camera or null
+//     */
+//    @Override
+//    public Camera get(String name) {
+//        return super.get(name);
+//    }
+
 
     public Camera save(Camera camera) {
         put(camera.getName(), camera);

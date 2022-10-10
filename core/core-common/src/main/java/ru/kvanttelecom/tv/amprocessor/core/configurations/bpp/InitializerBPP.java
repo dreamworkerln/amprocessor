@@ -113,7 +113,7 @@ public class InitializerBPP implements BeanPostProcessor, Ordered {
                             Class<?>[] params = m.getParameterTypes();
                             method = bean.getClass().getDeclaredMethod("initialize", params);
                             method.setAccessible(true);
-                            method.invoke(bean, null);
+                            method.invoke(bean, (Object) null);
                         }
                     }
                 }

@@ -3,7 +3,6 @@ package ru.kvanttelecom.tv.amprocessor.flexporter.services;
 import com.github.anhdat.PrometheusApiClient;
 import com.github.anhdat.models.VectorResponse;
 import com.github.anhdat.models.VectorResult;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,7 +10,7 @@ import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
 import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraDetails;
 import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraGroup;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras.CameraService;
-import ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus.prometheus_series;
+import ru.kvanttelecom.tv.amprocessor.core.prometheus.data.schema.prometheus_series;
 
 import java.io.IOException;
 import java.time.Duration;

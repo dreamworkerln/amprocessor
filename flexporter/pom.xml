@@ -71,6 +71,14 @@
             <scope>compile</scope>
         </dependency>
 
+        <!--module core-prometheus -->
+        <dependency>
+            <groupId>ru.kvant-telecom.tv.amprocessor</groupId>
+            <artifactId>core-prometheus</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
 
         <!--module configz-prometheus -->
         <dependency>

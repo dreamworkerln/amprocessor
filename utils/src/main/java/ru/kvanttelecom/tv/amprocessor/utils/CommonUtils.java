@@ -48,9 +48,9 @@ public class CommonUtils {
     }
 
     /**
-     * Remove port
+     * Remove :port from full domain name
      * @param instance
-     * @return domainName
+     * @return full domain name
      */
     public static String getDomainName(String instance) {
         int i = instance.indexOf(":");

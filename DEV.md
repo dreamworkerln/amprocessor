@@ -92,3 +92,8 @@ maven get dependencies tree
 ```
 mvn clean dependency:tree > dep.txt
 ```
+
+maven generate project from archetype
+```
+mvn archetype:generate -DarchetypeGroupId=ru.dreamworkerln.spring.archetypes -DarchetypeArtifactId=spring-maven-module-archetype   -DarchetypeVersion=1.0.0 -DinteractiveMode=true
+```

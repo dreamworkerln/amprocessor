@@ -24,14 +24,14 @@ public class Camera extends AbstractDto implements Subject {
     //protected StreamKey key;
 
     @NotNull
-    protected String hostname; // only unix hostame (t3)
+    protected String hostname; // only unix hostname - the lowest domain label (t7)
     @NotNull
     protected String name;
     protected String title;
 
     @NotNull
-    protected String domainName;
-    private Map<String,String> referenceUrlMap;
+    protected String domainName; // full domain name (t7.cameras.mydomain.ru)
+    private   Map<String,String> referenceUrlMap;
     protected String comment;
     protected String postalAddress;
     protected String coordinates;

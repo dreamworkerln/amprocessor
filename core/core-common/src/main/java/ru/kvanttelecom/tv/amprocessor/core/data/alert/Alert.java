@@ -21,7 +21,7 @@ public class Alert implements Serializable {
     protected String name;         // alert name
     protected AlertStatus status;  // alert status
     protected String severity;     // alert severity
-    protected String instance;     // alert instance (domain name+port(if any))
+    protected String instance;     // alert instance (full domain name + port(if have any))
     protected String title;        // alert title
     protected String description;  // alert description
     protected Instant startsAt;    // start at

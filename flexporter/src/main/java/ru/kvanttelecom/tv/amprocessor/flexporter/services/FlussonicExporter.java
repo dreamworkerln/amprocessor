@@ -13,14 +13,14 @@ import org.springframework.util.Assert;
 import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras.CameraService;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.modules.ModulesService;
-import ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus.prometheus_series;
+import ru.kvanttelecom.tv.amprocessor.core.prometheus.data.schema.prometheus_series;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera.INCOMPLETE_CAMERA_IMPORT;
-import static ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus.prometheus_series.flussonic.expressions;
 import static ru.kvanttelecom.tv.amprocessor.utils.constants.Common.*;
+
 
 /**
  * Merge Camera from cache to CameraState
@@ -149,7 +149,7 @@ public class FlussonicExporter {
         //Map<StreamKey, String> instances = new HashMap<>(); // map instances камер
 
         // Get camera aliveness from prometheus for last 15s
-        VectorResponse response = prometheusClient.query(expressions.rate_flussonic_stream_bytes_in_15s);
+        VectorResponse response = prometheusClient.query(prometheus_series.flussonic.expressions.rate_flussonic_stream_bytes_in_15s);
 
         if(response == null || response.data == null) {
             throw new IllegalArgumentException("Prometheus - no response");
@@ -163,12 +163,14 @@ public class FlussonicExporter {
 
             // validating camera from Prometheus
 
-            // хорошая камера, hostname стримера и имя камеры
+            // хорошая камера, присутствуют hostname стримера и имя камеры
             Camera camera = cameraService.get(hostname, name);
             if(camera != null) {
                 result.put(name, new HostCameraAlive(hostname, name, alive));
             }
             else {
+                // плохая неизвестная камера, попала в prometheus с какого-то стримера,
+                // Watcher об этой камере не знает
                 log.debug(UNKNOWN_MARKER, "Camera {}.{} not found in cameraService, skip", hostname, name);
             }
         }

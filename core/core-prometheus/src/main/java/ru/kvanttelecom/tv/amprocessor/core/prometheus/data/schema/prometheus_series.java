@@ -1,6 +1,8 @@
-package ru.kvanttelecom.tv.amprocessor.flexporter.data.schema.prometheus;
+package ru.kvanttelecom.tv.amprocessor.core.prometheus.data.schema;
 
 public class prometheus_series {
+
+    public static final String labels = "labels";
 
     public static class flussonic {
 
@@ -23,7 +25,7 @@ public class prometheus_series {
             public static final String stream =    "stream";
             public static final String title =     "title";
             public static final String instance =  "instance";
-            public static final String server_id = "server_id";
+            public static final String host = "host";
         }
 
         /**

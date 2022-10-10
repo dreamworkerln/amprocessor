@@ -2,10 +2,12 @@ package ru.kvanttelecom.tv.amprocessor.core.data.subject;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import ru.dreamworkerln.spring.utils.common.dto.AbstractDto;
 
 import java.util.Map;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 public class DefaultSubject extends AbstractDto implements Subject {
 
