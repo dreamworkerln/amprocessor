@@ -2,7 +2,7 @@
 
 # Docker TAG
 #export TAG=latest
-export TAG=0.42
+export TAG=0.43
 
 # java config
 JAVA_OPTS_HEAP="-Xmx128m -Xms128m"
