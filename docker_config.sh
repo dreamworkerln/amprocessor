@@ -5,7 +5,7 @@
 export TAG=0.43
 
 # java config
-JAVA_OPTS_HEAP="-Xmx128m -Xms128m"
+export JAVA_OPTS_HEAP="-Xmx128m -Xms128m"
 
 # modules
 declare -a modules=("configserver" "sgrabber" "flexporter" "alerthandler" "telebot" "mailer" "cameradetails")

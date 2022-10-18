@@ -2,7 +2,7 @@ package ru.kvanttelecom.tv.amprocessor.core.configurations;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import ru.kvanttelecom.tv.amprocessor.core.configurations.bpp.InitializerBPP;
+import ru.dreamworkerln.spring.utils.common.bpp.InitializerBPP;
 
 @Configuration
 public class CommonConfigurationsBPP {
