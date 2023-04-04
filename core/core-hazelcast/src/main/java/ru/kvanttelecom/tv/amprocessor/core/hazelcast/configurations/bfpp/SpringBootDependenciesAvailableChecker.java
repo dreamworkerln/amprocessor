@@ -27,7 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * ....
- * Other beans like Spring TaskSchedulerBuilder, DispatcherServlet will be altered to depend on this SpringBootReadinessChecker
+ * Other beans like Spring TaskSchedulerBuilder, DispatcherServlet will be altered to depend on this SpringBootDependenciesAvailableChecker
  * So Spring Boot application execution will be suspended until custom hazelcast cache will be initialized
  */
 @Slf4j

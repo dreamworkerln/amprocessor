@@ -25,7 +25,7 @@ public class SpringBootWaitingBeanFactoryPostProcessor implements BeanFactoryPos
         bd.setBeanClass(SpringBootDependenciesAvailableChecker.class);
         ((DefaultListableBeanFactory) bf).registerBeanDefinition(initLevelCheckerBeanName, bd);
 
-        // Make beans that needed to be suspended depends on the SpringBootReadinessChecker
+        // Make beans that needed to be suspended depends on the SpringBootDependenciesAvailableChecker
         List<String> classes = List.of(
             "org.springframework.web.servlet.DispatcherServlet",
             "org.springframework.boot.task.TaskSchedulerBuilder");

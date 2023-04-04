@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
-import ru.dreamworkerln.spring.utils.common.annotations.Default;
+import ru.dreamworkerln.spring.utils.common.configurations.annotations.Default;
 import ru.dreamworkerln.spring.utils.common.dto.AbstractDto;
 
 import java.util.HashSet;

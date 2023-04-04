@@ -13,9 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import ru.dreamworkerln.spring.utils.common.threadpool.BlockingJobPool;
 import ru.dreamworkerln.spring.utils.common.threadpool.JobResult;
 
+import ru.dreamworkerln.spring.utils.common.threadpool.blocking.BlockingJobPool;
+import ru.dreamworkerln.spring.utils.common.threadpool.blocking.BlockingJobPoolBuilder;
 import ru.kvanttelecom.tv.amprocessor.core.telebot.configurations.properties.TelebotProperties;
 import ru.kvanttelecom.tv.amprocessor.utils.Direction;
 
@@ -64,8 +65,7 @@ public abstract class BaseBot {
     //private final AtomicLong idGen =  new AtomicLong();
     //private final ConcurrentMap<Long, SendMessage> messageQueue = new ConcurrentHashMap<>();
 
-    private final BlockingJobPool<SendMessage,SendResponse> jobPool = BlockingJobPool.Builder
-        .build(1, TELEGRAM_SEND_TIMEOUT_MIN, null, "telegramPool");
+    private BlockingJobPool<SendMessage,SendResponse> jobPool;
 
     //private Map<Long, AtomicLong> locks = new ConcurrentHashMap<>();
 
@@ -77,8 +77,17 @@ public abstract class BaseBot {
     protected TelebotProperties props;
 
     @PostConstruct
-    protected void postConstruct() {
+    private void init() {
         log.info("Staring telegram bot");
+
+
+        // Create jobPool
+        BlockingJobPoolBuilder<SendMessage,SendResponse> poolBuilder = BlockingJobPool.builder();
+        poolBuilder.setPoolName("telegramPool");
+        poolBuilder.setTimeout(TELEGRAM_SEND_TIMEOUT_MIN);
+        poolBuilder.setPoolSize(1);
+        jobPool = poolBuilder.build();
+
 
         DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.US);
         otherSymbols.setDecimalSeparator('.');
@@ -243,11 +252,11 @@ public abstract class BaseBot {
                         log.debug("Telebot - sending message");
 
                         // отправка
-                        JobResult<SendMessage, SendResponse> jobResult = jobPool.execTimeout(msg,
-                            a -> new JobResult<>(msg, bot.execute(msg)), telegramSendTimeout.get());
-
-                        Throwable exception = jobResult.getException();
-                        SendResponse response = jobResult.getResult();
+                        JobResult<SendMessage, SendResponse> jobResult =
+                            jobPool.execTimeout(null, () -> bot.execute(msg), telegramSendTimeout.get());
+                        
+                        Throwable exception = jobResult.exception;
+                        SendResponse response = jobResult.result;
                         
                         sendOk = exception == null && response != null && response.isOk();
 

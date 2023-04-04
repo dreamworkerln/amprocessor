@@ -8,11 +8,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
-import ru.dreamworkerln.spring.utils.common.threadpool.BlockingJobPool;
 import ru.dreamworkerln.spring.utils.common.threadpool.JobResult;
+import ru.dreamworkerln.spring.utils.common.threadpool.blocking.BlockingJobPool;
+import ru.dreamworkerln.spring.utils.common.threadpool.blocking.BlockingJobPoolBuilder;
 import ru.kvanttelecom.tv.amprocessor.mailer.configurations.properties.MailProperties;
 import ru.kvanttelecom.tv.amprocessor.utils.Direction;
 
+import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -33,8 +35,7 @@ public class MailSender {
     private static final Duration MAIL_SEND_TIMEOUT_MAX = Duration.ofSeconds(1024);
     private final AtomicReference<Duration> mailSendTimeout = new AtomicReference<>(MAIL_SEND_TIMEOUT_MIN);
 
-    private final BlockingJobPool<SimpleMailMessage, Void> jobPool = BlockingJobPool.Builder
-        .build(1, MAIL_SEND_TIMEOUT_MIN, null, "mailPool");
+    private BlockingJobPool<SimpleMailMessage, Void> jobPool;
 
     @Autowired
     private JavaMailSender javaMailSender;
@@ -46,6 +47,19 @@ public class MailSender {
 
     //private final Deque<SimpleMailMessage> messageQueue = new ConcurrentLinkedDeque<>();
     private final BlockingDeque<SimpleMailMessage> messageQueue = new LinkedBlockingDeque<>();
+
+
+    @PostConstruct
+    private void init() {
+        log.info("Staring mail sender");
+
+        // Create jobPool
+        BlockingJobPoolBuilder<SimpleMailMessage, Void> poolBuilder = BlockingJobPool.builder();
+        poolBuilder.setPoolName("mailPool");
+        poolBuilder.setTimeout(MAIL_SEND_TIMEOUT_MIN);
+        poolBuilder.setPoolSize(1);
+        jobPool = poolBuilder.build();
+    }
 
 
     /**
@@ -96,15 +110,11 @@ public class MailSender {
 
                     log.debug("Sending mail message, subject: \"{}\", to: {}", message.getSubject(), message.getTo());
 
-                    // отправка
-                    JobResult<SimpleMailMessage, Void> jobResult =
-                        jobPool.execTimeout(message, m -> {
-                                javaMailSender.send(m);
-                                return new JobResult<>(m);
-                            },
-                            mailSendTimeout.get());
 
-                    Throwable exception = jobResult.getException();
+                    JobResult<SimpleMailMessage, Void> jobResult =
+                        jobPool.execTimeout(null, () -> javaMailSender.send(message), mailSendTimeout.get());
+
+                    Throwable exception = jobResult.exception;
                     sendOk = exception == null;
 
                     // принудительно ждем после успешной/неуспешной отправки каждого письма

@@ -6,7 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.core.annotation.Order;
 import ru.dreamworkerln.spring.db.entities.AbstractEntity;
-import ru.dreamworkerln.spring.utils.common.annotations.Default;
+import ru.dreamworkerln.spring.utils.common.configurations.annotations.Default;
 import ru.kvanttelecom.tv.amprocessor.core.dto.cameradetails.CameraGroup;
 
 import javax.persistence.*;

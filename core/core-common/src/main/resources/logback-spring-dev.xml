@@ -194,6 +194,7 @@
     <logger name="sun.rmi.transport" level="WARN"/>
     <logger name="okhttp3" level="WARN"/>
     <logger name="com.hazelcast" level="WARN"/>
+    <logger name="com.pengrad.telegrambot" level="WARN"/>
 
     <!-- PROJECT LEVEL DEFAULT -->
     <logger name="ru.kvanttelecom.tv.amprocessor" level="INFO"/>

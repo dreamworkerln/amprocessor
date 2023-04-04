@@ -8,9 +8,12 @@ source docker_config.sh
 # (don't docker push to registry, don't deploy to server)
 MAKE_CONFIG_ONLY=false
 
-# Only push docker images to registry
+# Only push docker images to registry, then exit script
 # (don't deploy to server)
 PUSH_TO_REGISTRY_ONLY=false
+
+# Push docker images to registry
+PUSH_TO_REGISTRY=true
 
 # spring profile may be empty -> will be used default profile
 #export PROFILE=dev
@@ -37,6 +40,7 @@ echo "Deploying to host:     $HOST"
 echo "---"
 echo "Use LOG2JSON:          $ENABLE_LOG2JSON"
 echo "Make config only:      $MAKE_CONFIG_ONLY"
+echo "Push to registry:      $PUSH_TO_REGISTRY"
 echo "Push to registry only: $PUSH_TO_REGISTRY_ONLY"
 
 
@@ -60,17 +64,19 @@ fi
 
 
 # pushing all modules
-for name in "${modules[@]}"
-do
+if [ "${PUSH_TO_REGISTRY}" = true ]; then
+
+  for name in "${modules[@]}"
+  do
+    echo -e "\n${YELLOW}Pushing image: $name:$TAG${NC}"
+    docker push dreamworkerln/amprocessor-"${name}":"$TAG"
+  done
+
+  # pushing additional images (non java)
+  name="database"
   echo -e "\n${YELLOW}Pushing image: $name:$TAG${NC}"
   docker push dreamworkerln/amprocessor-"${name}":"$TAG"
-done
-
-# pushing additional images (non java)
-name="database"
-echo -e "\n${YELLOW}Pushing image: $name:$TAG${NC}"
-docker push dreamworkerln/amprocessor-"${name}":"$TAG"
-
+fi
 
 
 # Exit if only push to registry
