@@ -45,7 +45,8 @@ public class WatcherSpringBeanConfigurations {
         RestClientBuilder builder = new RestClientBuilder();
         return builder
             .restTemplate(restTemplate)
-            .header("x-vsaas-session", watcherProperties.getToken())
+            //.header("x-vsaas-session", watcherProperties.getToken())
+            .header("x-vsaas-api-key", watcherProperties.getToken())
             .header("Content-Type", "application/json")
             .userAgent("Zrbite 0.1")
             .acceptEncoding("gzip, deflate, br")
