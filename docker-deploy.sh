@@ -6,7 +6,7 @@ source docker_config.sh
 
 # Only prepare config for local docker run, then exit script
 # (don't docker push to registry, don't deploy to server)
-MAKE_CONFIG_ONLY=false
+MAKE_CONFIG_ONLY=true
 
 # Only push docker images to registry, then exit script
 # (don't deploy to server)
