@@ -35,9 +35,9 @@ import static ru.kvanttelecom.tv.amprocessor.utils.constants.Common.INSTANT_ZERO
 public class AlertsFormatter {
 
     public static final DateTimeFormatter formatterLocal =
-        DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
-            .withLocale(Locale.forLanguageTag("ru-RU"))
-            .withZone(ZoneId.systemDefault());
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
+                    .withLocale(Locale.forLanguageTag("ru-RU"))
+                    .withZone(ZoneId.systemDefault());
 
 
     /**
@@ -46,16 +46,18 @@ public class AlertsFormatter {
      * @param type MarkupTypeEnum
      * @return
      */
-    public static String toString(List<Alert> alerts, MarkupTypeEnum type) {
+    public static String toString(List<Alert> alerts,
+                                  MarkupTypeEnum type,
+                                  Set<MarkupDetails> custom) {    //, Set<MarkupSybType>
 
         StringBuilder sb = new StringBuilder();
 
         // 1. GROUP BY Alert STATUS
 
         Map<AlertStatus, List<Alert>> groupedByAlertStatus = alerts.stream()
-            .collect(groupingBy(Alert::getStatus));
+                .collect(groupingBy(Alert::getStatus));
 
-        formatAlertStatusMap(groupedByAlertStatus, type, sb);
+        formatAlertStatusMap(groupedByAlertStatus, type, custom, sb);
 
         return sb.toString();
     }
@@ -64,8 +66,9 @@ public class AlertsFormatter {
 
 
     private static void formatAlertStatusMap(Map<AlertStatus, List<Alert>> groupedByAlertStatus,
-                                      MarkupTypeEnum type,
-                                      StringBuilder sb) {
+                                             MarkupTypeEnum type,
+                                             Set<MarkupDetails> custom,
+                                             StringBuilder sb) {
 
         String STATUS_DELIMITER = "\n";
         String BOLDER = "";
@@ -94,7 +97,7 @@ public class AlertsFormatter {
 
                 sb.append(STATUS_DELIMITER);
                 String statusStr = status == AlertStatus.FIRING ?
-                    "🔥 " + BOLDER + status.toString().toUpperCase() + BOLDER + " 🔥" : status.toString();
+                        "🔥 " + BOLDER + status.toString().toUpperCase() + BOLDER + " 🔥" : status.toString();
                 sb.append("Alerts " + statusStr + "\n");
                 sb.append(STATUS_DELIMITER);
                 sb.append("\n");
@@ -102,9 +105,9 @@ public class AlertsFormatter {
 
                 // 2. GROUP BY Alert name
                 Map<String, List<Alert>> groupedByAlertName = statusMap.stream()
-                    .collect(groupingBy(Alert::getName));
+                        .collect(groupingBy(Alert::getName));
 
-                formatAlertNameMap(groupedByAlertName, type, sb);
+                formatAlertNameMap(groupedByAlertName, type, custom, sb);
 
             }
         }
@@ -113,8 +116,9 @@ public class AlertsFormatter {
 
 
     private static void formatAlertNameMap(Map<String, List<Alert>> groupedByAlertName,
-                                    MarkupTypeEnum type,
-                                    StringBuilder sb) {
+                                           MarkupTypeEnum type,
+                                           Set<MarkupDetails> custom,
+                                           StringBuilder sb) {
 
         String ALERT_DELIMITER = "\n";
         String BOLDER = "";
@@ -147,22 +151,22 @@ public class AlertsFormatter {
 
                 // 3. GROUP BY Organisation name
                 Map<String, List<Alert>> groupedByAlertOrganisation = nameList.stream()
-                    .collect(groupingBy(alert -> {
-                        // default organisation name
-                        String result = null;
-                        Subject subject = alert.getSubject();
-                        if (subject instanceof Camera) {
-                            result = ((Camera)subject).getOrganization();
-                            Assert.notNull(result, "(Subject as Camera).organisation == null");
-                        }
-                        else {
-                            result = OrganisationType.EMPTY;
-                        }
+                        .collect(groupingBy(alert -> {
+                            // default organisation name
+                            String result = null;
+                            Subject subject = alert.getSubject();
+                            if (subject instanceof Camera) {
+                                result = ((Camera)subject).getOrganization();
+                                Assert.notNull(result, "(Subject as Camera).organisation == null");
+                            }
+                            else {
+                                result = OrganisationType.EMPTY;
+                            }
 
-                        return result;
-                    }));
+                            return result;
+                        }));
 
-                formatAlertOrganisationMap(groupedByAlertOrganisation, type, sb);
+                formatAlertOrganisationMap(groupedByAlertOrganisation, type, custom, sb);
             }
         }
     }
@@ -170,8 +174,9 @@ public class AlertsFormatter {
 
 
     private static void formatAlertOrganisationMap(Map<String, List<Alert>> groupedByAlertOrganisation,
-                                             MarkupTypeEnum type,
-                                             StringBuilder sb) {
+                                                   MarkupTypeEnum type,
+                                                   Set<MarkupDetails> custom,
+                                                   StringBuilder sb) {
 
         String ORGANISATION_FORMATTER = "Организация: {}\n";
 
@@ -179,16 +184,16 @@ public class AlertsFormatter {
 
             case MAIL:
                 ORGANISATION_FORMATTER = "--------------------------------------------\n" +
-                    "Организация: {}\n" +
-                    "-----------\n" +
-                    "\n";
+                        "Организация: {}\n" +
+                        "-----------\n" +
+                        "\n";
                 break;
 
 
             case TELEGRAM:
                 ORGANISATION_FORMATTER = "-------------------------------\n" +
-                    "Организация: *{}*\n" +
-                    "\n";
+                        "Организация: *{}*\n" +
+                        "\n";
                 break;
         }
 
@@ -212,7 +217,7 @@ public class AlertsFormatter {
 
                 // alert list
                 for (Alert alert : alerts) {
-                    formatAlert(alert, type, sb);
+                    formatAlert(alert, type, custom, sb);
                 }
             }
         }
@@ -227,7 +232,9 @@ public class AlertsFormatter {
 //            .withZone(ZoneId.of("Europe/Moscow"));  // ZoneId.systemDefault()
 
 
-    public static void formatAlert(Alert alert,MarkupTypeEnum type, StringBuilder sb) {
+    public static void formatAlert(Alert alert,MarkupTypeEnum type,
+                                   Set<MarkupDetails> custom,
+                                   StringBuilder sb) {
 
 
         switch (type) {
@@ -242,10 +249,10 @@ public class AlertsFormatter {
 
         Subject subject = alert.getSubject();
         if(alert.getSubject() instanceof Camera) {
-            formatCamera((Camera)subject, type, sb);
+            formatCamera((Camera)subject, type, custom, sb);
         }
         else {
-            formatDefaultSubject((DefaultSubject) subject, type, sb);
+            formatDefaultSubject((DefaultSubject) subject, type, custom, sb);
         }
 
         Instant startsAt = alert.startsAt;
@@ -268,7 +275,9 @@ public class AlertsFormatter {
 
 
 
-    public static void formatCamera(Camera camera, MarkupTypeEnum type, StringBuilder sb) {
+    public static void formatCamera(Camera camera, MarkupTypeEnum type,
+                                    Set<MarkupDetails> custom,
+                                    StringBuilder sb) {
 
         String BOLDER = "";
 
@@ -293,6 +302,13 @@ public class AlertsFormatter {
 
 
         sb.append(BOLDER + title + BOLDER + "\n");
+        
+        // CAMERAS SHORT FORM (no watcher, mediaserver URLs)
+        if(custom.contains(MarkupDetails.CAMERAS_SHORT_FORM)) {
+            sb.append( camera.getName() + "\n");
+            return;
+        }
+
 
         if(agentId != null) {
             sb.append("Агент: ON"+ '\n');
@@ -330,7 +346,9 @@ public class AlertsFormatter {
     }
 
 
-    public static void formatDefaultSubject(DefaultSubject defSubj, MarkupTypeEnum type, StringBuilder sb) {
+    public static void formatDefaultSubject(DefaultSubject defSubj, MarkupTypeEnum type,
+                                            Set<MarkupDetails> custom,
+                                            StringBuilder sb) {
 
         String BOLDER = "";
 
@@ -368,7 +386,7 @@ public class AlertsFormatter {
         String result;
         if(d.toDays() == 0) {
             result = DurationFormatUtils.formatDuration(d.toMillis(),
-                "HH:mm:ss", true);
+                    "HH:mm:ss", true);
         }
         else {
             //String days = d.toDays() == 1 ? "день" : "дней";

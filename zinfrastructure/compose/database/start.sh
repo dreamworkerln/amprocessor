@@ -3,4 +3,4 @@
 set -a
 source ./config
 
-docker-compose -p database up -d
+docker compose -p database up -d

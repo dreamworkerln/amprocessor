@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.Alert;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.AlertsFormatter;
+import ru.kvanttelecom.tv.amprocessor.core.data.alert.MarkupDetails;
 import ru.kvanttelecom.tv.amprocessor.core.data.alert.MarkupTypeEnum;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.messages.BaseMessage;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.alerts.broker.AlertMessageBusService;
@@ -42,7 +43,7 @@ public class AlertReceiver extends AlertMessageBusService {
         List<Alert> alerts = container.body;
 
         log.debug("RECEIVED ALERT: {}", alerts);
-        String s = AlertsFormatter.toString(alerts, MarkupTypeEnum.TELEGRAM);
+        String s = AlertsFormatter.toString(alerts, MarkupTypeEnum.TELEGRAM, MarkupDetails.NONE);
         telebot.sendMessageToGroup(s);
     }
 

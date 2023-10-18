@@ -4,10 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
-import ru.kvanttelecom.tv.amprocessor.core.data.alert.Alert;
-import ru.kvanttelecom.tv.amprocessor.core.data.alert.AlertStatus;
-import ru.kvanttelecom.tv.amprocessor.core.data.alert.AlertsFormatter;
-import ru.kvanttelecom.tv.amprocessor.core.data.alert.MarkupTypeEnum;
+import ru.kvanttelecom.tv.amprocessor.core.data.alert.*;
 import ru.kvanttelecom.tv.amprocessor.mailer.configurations.properties.MailProperties;
 import ru.kvanttelecom.tv.amprocessor.mailer.data.mail.filtres._base.AlertFilter;
 
@@ -40,7 +37,7 @@ public class MailFilter {
 
             log.debug("Recipient: {}, filtered alert: {}", to, filtered);
 
-            String text = AlertsFormatter.toString(filtered, MarkupTypeEnum.MAIL);
+            String text = AlertsFormatter.toString(filtered, MarkupTypeEnum.MAIL, MarkupDetails.NONE);
             String subject = "Alertmanager cam: " + getSubject(filtered);
 
             mailSender.send(subject, to, text);

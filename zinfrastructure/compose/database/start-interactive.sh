@@ -5,4 +5,4 @@ source ~/.bashrc
 set -a
 source ./config
 
-docker-compose -p database up
+docker compose -p database up
