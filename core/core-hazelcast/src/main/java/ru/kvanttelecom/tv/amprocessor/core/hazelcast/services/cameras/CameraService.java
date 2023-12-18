@@ -3,6 +3,7 @@ package ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import ru.kvanttelecom.tv.amprocessor.core.dto.camera.Camera;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services._base.BaseCacheService;
 import ru.kvanttelecom.tv.amprocessor.core.hazelcast.services.cameras.configurations.CamerasCacheConfiguration;
@@ -12,7 +13,7 @@ import java.util.*;
 /**
  * Provide information about cameras from hazelcast map
  */
-@Component
+@Service
 @Slf4j
 public class CameraService extends BaseCacheService<String, Camera, Set<Camera>, Void> {
 
